@@ -1,4 +1,8 @@
+require "namecheap/version"
 require 'httparty'
+
+module Namecheap
+end
 
 class NilNamecheapResponse < Exception
 end
