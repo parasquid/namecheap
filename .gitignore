@@ -2,4 +2,7 @@
 .bundle
 Gemfile.lock
 pkg/*
-/nbproject/private/
+/nbproject
+/bak
+config/namecheap.yml
+
