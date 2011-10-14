@@ -1,7 +1,7 @@
 development:
-  key: 4fad5a63f8bd4e03a8bbc8131a2fb331
-  username: parasquid
-  client_ip: 175.136.192.89
+  key: apikey
+  username: apiuser
+  client_ip: 127.0.0.1
 
 test:
   key: apikey
