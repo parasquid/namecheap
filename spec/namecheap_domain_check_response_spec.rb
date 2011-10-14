@@ -1,4 +1,8 @@
 require File.dirname(__FILE__) + '/spec_helper'
+
+$LOAD_PATH.unshift("#{File.dirname(__FILE__)}/../lib/namecheap")
+Dir.glob("#{File.dirname(__FILE__)}/../lib/namecheap/*.rb") { |lib| require File.basename(lib, '.*') }
+
 require File.dirname(__FILE__) + '/../lib/namecheap'
 
 describe NamecheapDomainCheckResponse  do

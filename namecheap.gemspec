@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.name        = "namecheap"
   s.version     = Namecheap::VERSION
   s.authors     = ["parasquid"]
-  s.email       = ["tristan.gomezd@gmail.com"]
+  s.email       = ["tristan.gomez@gmail.com"]
   s.homepage    = "https://github.com/parasquid/namecheap"
   s.summary     = %q{Ruby wrapper for the Namecheap API}
   s.description = %q{Ruby wrapper for the Namecheap API}
