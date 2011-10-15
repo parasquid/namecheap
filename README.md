@@ -8,7 +8,7 @@ Namecheap is a ruby wrapper for the [Namecheap API](http://developer.namecheap.c
 
 The code was originally forked from https://github.com/hashrocket/namecheap
 
-At [Mindvalley](http://www.mindvalley) (the company I work for) we have something
+At [Mindvalley](http://www.mindvalley.com) (the company I work for) we have something
 called 'HackdayFridays' where we spend the whole day hacking on an interesting
 project that may or may not be directly related to the business. It was enacted
 so that the tech and production team can unwind from what can be a monotonous
