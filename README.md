@@ -8,6 +8,32 @@ Namecheap is a ruby wrapper for the [Namecheap API](http://developer.namecheap.c
 
 The code was originally forked from https://github.com/hashrocket/namecheap
 
+At [Mindvalley](http://www.mindvalley) (the company I work for) we have something
+called 'HackdayFridays' where we spend the whole day hacking on an interesting
+project that may or may not be directly related to the business. It was enacted
+so that the tech and production team can unwind from what can be a monotonous
+work week, and hack on something more interesting.
+
+One of the proposed projects was a 'big red button' where someone can just type
+in the domain name, push a big red button, and magically:
+
+* the domain name is purchased
+* the DNS is pointed to our load balancer
+* a subversion repository is created (with users)
+* a template is committed to the repository with default pages
+* a project is created in webistrano
+* the initial setup and deployment is done
+
+Mostly everything is already automated except the domain name purchase and dns.
+We purchase most of our domains from Namecheap (and some from GoDaddy) and it was
+fortunate that Namecheap has an API. Unfortunately there didn't seem to be a gem
+that already existed.
+
+A search brought me to HashRocket's namecheap API wrapper. It didn't have any of
+the purchase API wrappers, but it was a good starting point (and allowed me to
+study how seasoned pros would approach API wrappers). So I forked, published a
+gem based on the fork, and hacked on it. And that's how it all began :)
+
 License
 -------
 
@@ -35,3 +61,9 @@ Tristan V. Gomez: tristan dot gomez at gmail dot com
 [Hashrocket](http://www.hashrocket.com/) from where the original code was forked from
 
 [Mongoid](http://www.mongoid.org) from where the configuration code was modified from
+
+
+Plug!!
+------
+
+Mindvalley is [hiring](http://www.mindvalley.com/careers) :)
