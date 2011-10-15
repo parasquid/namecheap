@@ -5,6 +5,7 @@ About this project
 -------------
 
 Namecheap is a ruby wrapper for the [Namecheap API](http://developer.namecheap.com/docs/doku.php?id=api-reference:index)
+
 The code was originally forked from https://github.com/hashrocket/namecheap
 
 License
@@ -30,5 +31,7 @@ Credits
 -------
 
 Tristan V. Gomez: tristan dot gomez at gmail dot com
+
 [Hashrocket](http://www.hashrocket.com/) from where the original code was forked from
+
 [Mongoid](http://www.mongoid.org) from where the configuration code was modified from
