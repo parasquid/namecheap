@@ -30,4 +30,7 @@ module Namecheap
   #   Namecheap.key = 'newkey'
   delegate *(Config.public_instance_methods(false) << { :to => Config })
 
+  attr_accessor :domains
+  self.domains = Namecheap::Domains.new
+
 end
