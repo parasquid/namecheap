@@ -14,6 +14,14 @@ class Hash
     end.sort * '&'
   end
 
+  def camelize_keys!
+    keys.each do |key|
+      self[key.to_s.camelize] = delete(key)
+    end
+    self
+  end
+
+
   protected
 
   def to_query(key)
@@ -53,4 +61,24 @@ class Module
       module_eval("def #{prefix}#{method}(*args, &block)\n#{to}.__send__(#{method.inspect}, *args, &block)\nend\n", "(__DELEGATION__)", 1)
     end
   end
+end
+
+class String
+  def camelize(first_letter = :upper)
+    case first_letter
+    when :upper then _camelize(self, true)
+    when :lower then _camelize(self, false)
+    end
+  end
+
+  private
+
+  def _camelize(lower_case_and_underscored_word, first_letter_in_uppercase = true)
+    if first_letter_in_uppercase
+      lower_case_and_underscored_word.to_s.gsub(/\/(.?)/) { "::#{$1.upcase}" }.gsub(/(?:^|_)(.)/) { $1.upcase }
+    else
+      lower_case_and_underscored_word.to_s[0].chr.downcase + camelize(lower_case_and_underscored_word)[1..-1]
+    end
+  end
+
 end

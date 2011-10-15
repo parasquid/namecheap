@@ -9,13 +9,13 @@ module Namecheap
 
   extend self
 
-  # Sets the Mongoid configuration options. Best used by passing a block.
+  # Sets the Namecheap configuration options. Best used by passing a block.
   #
   # @example Set up configuration options.
   #   Namecheap.configure do |config|
-  #     key = "apikey"
-  #     username = "apiuser"
-  #     client_ip = "127.0.0.1"
+  #     config.key = "apikey"
+  #     config.username = "apiuser"
+  #     config.client_ip = "127.0.0.1"
   #   end
   # @return [ Config ] The configuration obejct.
   def configure

@@ -8,4 +8,3 @@ end
 
 require File.dirname(__FILE__) + '/../lib/namecheap'
 $LOAD_PATH.unshift("#{File.dirname(__FILE__)}/../lib/namecheap")
-require 'namecheap/domains'

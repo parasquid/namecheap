@@ -6,14 +6,17 @@ module Namecheap
     ENDPOINT = (ENVIRONMENT == 'production' ? PRODUCTION : SANDBOX)
 
     def api_call(command, command_args)
+      args = init_args(command_args.merge :command => command)
+      query = ENDPOINT + '?' + args.to_param
+      HTTParty.get(query)
+    end
+
+    def init_args(options = {})
       args = {}
       args['ApiUser'] = args['UserName'] = Namecheap.username
       args['ApiKey'] = Namecheap.key
       args['ClientIp'] = Namecheap.client_ip
-      args['Command'] = command
-      args.merge! command_args
-      query = ENDPOINT + '?' + args.to_param
-      HTTParty.get(query)
+      args.merge options.camelize_keys!
     end
   end
 end
