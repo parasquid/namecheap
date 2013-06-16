@@ -34,6 +34,11 @@ the purchase API wrappers, but it was a good starting point (and allowed me to
 study how seasoned pros would approach API wrappers). So I forked, published a
 gem based on the fork, and hacked on it. And that's how it all began :)
 
+Documentation
+-----
+
+[http://rubygems.org/gems/namecheap](http://rubygems.org/gems/namecheap)
+
 Usage
 -----
 
