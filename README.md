@@ -39,15 +39,19 @@ Usage
 
 In your initializers, configure Namecheap like so:
 
-    Namecheap.configure do |config|
-      config.key = 'apikey'
-      config.username = 'apiuser'
-      config.client_ip = '127.0.0.1'
-    end
+```ruby
+Namecheap.configure do |config|
+  config.key = 'apikey'
+  config.username = 'apiuser'
+  config.client_ip = '127.0.0.1'
+end
+```
 
 Then you can do something like:
 
-    Namecheap.domains.get_list
+```ruby
+Namecheap.domains.get_list
+```
 
 Please see the Namecheap API documentation for more information
 
