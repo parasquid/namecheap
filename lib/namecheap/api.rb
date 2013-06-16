@@ -5,11 +5,35 @@ module Namecheap
     ENVIRONMENT = defined?(Rails) && Rails.respond_to?(:env) ? Rails.env : (ENV["RACK_ENV"] || 'development')
     ENDPOINT = (ENVIRONMENT == 'production' ? PRODUCTION : SANDBOX)
 
-    def api_call(command, command_args)
-      command = 'namecheap.' + command
-      args = init_args(command_args.merge :command => command)
-      query = ENDPOINT + '?' + args.to_param
-      HTTParty.get(query)
+    def get(command, options = {})
+      request('get', command, options)
+    end
+
+    def post(command, options = {})
+      request('post', command, options)
+    end
+
+    def put(command, options = {})
+      request('post', command, options)
+    end
+
+    def delete(command, options = {})
+      request('post', command, options)
+    end
+
+    def request(method, command, options = {})
+      options = init_args(options.merge :command => 'namecheap.' + command)
+      
+      case method
+      when 'get'
+        HTTParty.get(ENDPOINT, options)
+      when 'post'
+        HTTParty.post(ENDPOINT, options)
+      when 'put'
+        HTTParty.put(ENDPOINT, options)
+      when 'delete'
+        HTTParty.delete(ENDPOINT, options)
+      end
     end
 
     def init_args(options = {})

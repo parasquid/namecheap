@@ -5,7 +5,7 @@ module Namecheap
     def create(sld, tld, options = {})
       options['SLD'] = sld
       options['TLD'] = tld
-      api_call('domains.ns.create', options)
+      get('domains.ns.create', options)
     end
 
     # Deletes a nameserver associated with the requested domain.
@@ -13,7 +13,7 @@ module Namecheap
     def delete(sld, tld, options = {})
       options['SLD'] = sld
       options['TLD'] = tld
-      api_call('domains.ns.delete', options)
+      get('domains.ns.delete', options)
     end
 
     # Retrieves information about a registered nameserver.
@@ -21,7 +21,7 @@ module Namecheap
     def get_info(sld, tld, options = {})
       options['SLD'] = sld
       options['TLD'] = tld
-      api_call('domains.ns.getInfo', options)
+      get('domains.ns.getInfo', options)
     end
 
     # Updates the IP address of a registered nameserver.
@@ -29,7 +29,7 @@ module Namecheap
     def update(sld, tld, options = {})
       options['SLD'] = sld
       options['TLD'] = tld
-      api_call('domains.ns.update', options)
+      get('domains.ns.update', options)
     end
   end
 end
