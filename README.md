@@ -1,6 +1,32 @@
 Overview
 ========
 
+Documentation
+-----
+
+[http://rubygems.org/gems/namecheap](http://rubygems.org/gems/namecheap)
+
+Usage
+-----
+
+In your initializers, configure Namecheap like so:
+
+```ruby
+Namecheap.configure do |config|
+  config.key = 'apikey'
+  config.username = 'apiuser'
+  config.client_ip = '127.0.0.1'
+end
+```
+
+Then you can do something like:
+
+```ruby
+Namecheap.domains.get_list
+```
+
+Please see the Namecheap API documentation for more information
+
 About this project
 -------------
 
@@ -34,31 +60,20 @@ the purchase API wrappers, but it was a good starting point (and allowed me to
 study how seasoned pros would approach API wrappers). So I forked, published a
 gem based on the fork, and hacked on it. And that's how it all began :)
 
-Documentation
------
+Credits
+-------
 
-[http://rubygems.org/gems/namecheap](http://rubygems.org/gems/namecheap)
+Tristan V. Gomez: tristan dot gomez at gmail dot com
 
-Usage
------
+[Hashrocket](http://www.hashrocket.com/) from where the original code was forked from
 
-In your initializers, configure Namecheap like so:
+[Mongoid](http://www.mongoid.org) from where the configuration code was modified from
 
-```ruby
-Namecheap.configure do |config|
-  config.key = 'apikey'
-  config.username = 'apiuser'
-  config.client_ip = '127.0.0.1'
-end
-```
 
-Then you can do something like:
+Plug!!
+------
 
-```ruby
-Namecheap.domains.get_list
-```
-
-Please see the Namecheap API documentation for more information
+Mindvalley is [hiring](http://www.mindvalley.com/careers) :)
 
 License
 -------
@@ -77,19 +92,3 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-Credits
--------
-
-Tristan V. Gomez: tristan dot gomez at gmail dot com
-
-[Hashrocket](http://www.hashrocket.com/) from where the original code was forked from
-
-[Mongoid](http://www.mongoid.org) from where the configuration code was modified from
-
-
-Plug!!
-------
-
-Mindvalley is [hiring](http://www.mindvalley.com/careers) :)
