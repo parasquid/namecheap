@@ -1,5 +1,10 @@
 module Namecheap
   class Users < Api
+    def create(options = {})
+      args = options.clone
+      api_call('namecheap.users.create', args)
+    end
+
     def get_pricing(options = {})
       args = options.clone
       api_call('namecheap.users.getPricing', args)
