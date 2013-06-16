@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
+require File.dirname(__FILE__) + '/helper'
 
 describe "NamecheapAPI Wrapper"  do
   describe "initializating settings" do
