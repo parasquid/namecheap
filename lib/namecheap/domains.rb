@@ -1,67 +1,56 @@
 module Namecheap
   class Domains < Api
     def get_list(options = {})
-      args = options.clone
-      api_call('namecheap.domains.getList', args)
+      api_call('namecheap.domains.getList', options)
     end
 
     def get_contacts(domain, options = {})
-      args = options.clone
-      args['DomainName'] = domain
-      api_call('namecheap.domains.getContacts', args)
+      options['DomainName'] = domain
+      api_call('namecheap.domains.getContacts', options)
     end
 
     def create(domain, options = {})
-      args = options.clone
-      args['DomainName'] = domain
-      api_call('namecheap.domains.create', args)
+      options['DomainName'] = domain
+      api_call('namecheap.domains.create', options)
     end
 
     def get_tld_list(options = {})
-      args = options.clone
-      api_call('namecheap.domains.getTldList', args)
+      api_call('namecheap.domains.getTldList', options)
     end
 
     def set_contacts(domain, options = {})
-      args = options.clone
-      args['DomainName'] = domain
-      api_call('namecheap.domains.setContacts', args)
+      options['DomainName'] = domain
+      api_call('namecheap.domains.setContacts', options)
     end
 
     def check(domains = [], options = {})
-      args = options.clone
-      args['DomainList'] = domains.respond_to?(:join) ? domains.join(',') : domains
-      api_call('namecheap.domains.check', args)
+      options['DomainList'] = domains.respond_to?(:join) ? domains.join(',') : domains
+      api_call('namecheap.domains.check', options)
     end
 
     def reactivate(domain, options = {})
-      args = options.clone
-      args['DomainName'] = domain
-      api_call('namecheap.domains.reactivate', args)
+      options['DomainName'] = domain
+      api_call('namecheap.domains.reactivate', options)
     end
 
     def renew(domain, options = {})
-      args = options.clone
-      args['DomainName'] = domain
-      api_call('namecheap.domains.renew', args)
+      options['DomainName'] = domain
+      api_call('namecheap.domains.renew', options)
     end
 
     def get_registrar_lock(domain, options = {})
-      args = options.clone
-      args['DomainName'] = domain
-      api_call('namecheap.domains.getRegistrarLock', args)
+      options['DomainName'] = domain
+      api_call('namecheap.domains.getRegistrarLock', options)
     end
 
     def set_registrar_lock(domain, options = {})
-      args = options.clone
-      args['DomainName'] = domain
-      api_call('namecheap.domains.setRegistrarLock', args)
+      options['DomainName'] = domain
+      api_call('namecheap.domains.setRegistrarLock', options)
     end
 
     def get_info(domain, options = {})
-      args = options.clone
-      args['DomainName'] = domain
-      api_call('namecheap.domains.getInfo', args)
+      options['DomainName'] = domain
+      api_call('namecheap.domains.getInfo', options)
     end
   end
 end

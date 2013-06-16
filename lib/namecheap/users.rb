@@ -1,49 +1,40 @@
 module Namecheap
   class Users < Api
     def create(options = {})
-      args = options.clone
-      api_call('namecheap.users.create', args)
+      api_call('namecheap.users.create', options)
     end
 
     def get_pricing(options = {})
-      args = options.clone
-      api_call('namecheap.users.getPricing', args)
+      api_call('namecheap.users.getPricing', options)
     end
 
     def get_balances(options = {})
-      args = options.clone
-      api_call('namecheap.users.getBalances', args)
+      api_call('namecheap.users.getBalances', options)
     end
 
     def change_password(options = {})
-      args = options.clone
-      api_call('namecheap.users.changePassword', args)
+      api_call('namecheap.users.changePassword', options)
     end
 
     def update(options = {})
-      args = options.clone
-      api_call('namecheap.users.update', args)
+      api_call('namecheap.users.update', options)
     end
 
     def create_add_funds_request(options = {})
-      args = options.clone
-      api_call('namecheap.users.createaddfundsrequest', args)
+      api_call('namecheap.users.createaddfundsrequest', options)
     end
 
     def get_add_funds_status(id, options = {})
-      args = options.clone
-      args['TokenId'] = id
-      api_call('namecheap.users.getAddFundsStatus', args)
+      options['TokenId'] = id
+      api_call('namecheap.users.getAddFundsStatus', options)
     end
 
     def login(options = {})
-      args = options.clone
-      api_call('namecheap.users.login', args)
+      api_call('namecheap.users.login', options)
     end
 
     def reset_password(options = {})
-      args = options.clone
-      api_call('namecheap.users.resetPassword', args)
+      api_call('namecheap.users.resetPassword', options)
     end
   end
 end

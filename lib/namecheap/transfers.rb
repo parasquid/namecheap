@@ -1,26 +1,22 @@
 module Namecheap
   class Transfers < Api
     def create(domain, options = {})
-      args = options.clone
-      args['DomainName'] = domain
-      api_call('namecheap.domains.transfer.create', args)
+      options['DomainName'] = domain
+      api_call('namecheap.domains.transfer.create', options)
     end
 
     def get_status(id, options = {})
-      args = options.clone
-      args['TransferID'] = id
-      api_call('namecheap.domains.transfer.getStatus', args)
+      options['TransferID'] = id
+      api_call('namecheap.domains.transfer.getStatus', options)
     end
 
     def update_status(id, options = {})
-      args = options.clone
-      args['TransferID'] = id
-      api_call('namecheap.domains.transfer.updateStatus', args)
+      options['TransferID'] = id
+      api_call('namecheap.domains.transfer.updateStatus', options)
     end
     
     def get_list(options = {})
-      args = options.clone
-      api_call('namecheap.domains.transfer.getList', args)
+      api_call('namecheap.domains.transfer.getList', options)
     end
   end
 end

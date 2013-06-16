@@ -1,40 +1,34 @@
 module Namecheap
   class Whois_Guard < Api
     def allot(id, domain, options = {})
-      args = options.clone
-      args['WhoisguardId'] = id
-      args['DomainName'] = domain
-      api_call('namecheap.whoisguard.allot', args)
+      options['WhoisguardId'] = id
+      options['DomainName'] = domain
+      api_call('namecheap.whoisguard.allot', options)
     end
 
     def discard(id, options = {})
-      args = options.clone
-      args['WhoisguardId'] = id
-      api_call('namecheap.whoisguard.discard', args)
+      options['WhoisguardId'] = id
+      api_call('namecheap.whoisguard.discard', options)
     end
 
     def unallot(id, options = {})
-      args = options.clone
-      args['WhoisguardId'] = id
-      api_call('namecheap.whoisguard.unallot', args)
+      options['WhoisguardId'] = id
+      api_call('namecheap.whoisguard.unallot', options)
     end
 
     def disable(id, options = {})
-      args = options.clone
-      args['WhoisguardId'] = id
-      api_call('namecheap.whoisguard.disable', args)
+      options['WhoisguardId'] = id
+      api_call('namecheap.whoisguard.disable', options)
     end
 
     def enable(id, options = {})
-      args = options.clone
-      args['WhoisguardId'] = id
-      api_call('namecheap.whoisguard.enable', args)
+      options['WhoisguardId'] = id
+      api_call('namecheap.whoisguard.enable', options)
     end
 
     def change_email_address(id, options = {})
-      args = options.clone
-      args['WhoisguardId'] = id
-      api_call('namecheap.whoisguard.changeemailaddress', args)
+      options['WhoisguardId'] = id
+      api_call('namecheap.whoisguard.changeemailaddress', options)
     end
   end
 end
