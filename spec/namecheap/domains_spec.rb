@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/../helper'
 
-describe "Domains"  do
+describe Namecheap::Domains do
   it 'should initialize' do
     Namecheap::Domains.new
   end

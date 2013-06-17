@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/../helper'
 
-describe "Users"  do
+describe Namecheap::Users do
   it 'should initialize' do
     Namecheap::Users.new
   end

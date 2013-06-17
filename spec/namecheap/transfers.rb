@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/../helper'
 
-describe "Transfers"  do
+describe Namecheap::Transfers do
   it 'should initialize' do
     Namecheap::Transfers.new
   end

@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/../helper'
 
-describe "Whois Guard"  do
+describe Namecheap::Whois_Guard do
   it 'should initialize' do
     Namecheap::Whois_Guard.new
   end

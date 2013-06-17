@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/helper'
 
-describe "NamecheapAPI Wrapper"  do
+describe Namecheap do
   describe "initializating settings" do
 
     before :each do

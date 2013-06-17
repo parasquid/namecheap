@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/../helper'
 
-describe "Ssl"  do
+describe Namecheap::Ssl do
   it 'should initialize' do
     Namecheap::Ssl.new
   end
