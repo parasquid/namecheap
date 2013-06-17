@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/helper'
+require File.dirname(__FILE__) + '/../helper'
 
 describe "Whois Guard"  do
   it 'should initialize' do
