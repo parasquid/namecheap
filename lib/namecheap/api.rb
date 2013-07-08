@@ -22,7 +22,8 @@ module Namecheap
     end
 
     def request(method, command, options = {})
-      options = init_args(options.merge :command => 'namecheap.' + command)
+      command = 'namecheap.' + command
+      options = init_args.merge(options).merge({:command => command})
       options.camelize_keys!
       
       case method
@@ -37,11 +38,13 @@ module Namecheap
       end
     end
 
-    def init_args(options = {})
-      options['ApiUser'] = options['UserName'] = Namecheap.username
-      options['ApiKey'] = Namecheap.key
-      options['ClientIp'] = Namecheap.client_ip
-      options
+    def init_args
+      options = {
+        :ApiUser  => Namecheap.username,
+        :UserName => Namecheap.username,
+        :ApiKey   => Namecheap.key,
+        :ClientIp => Namecheap.client_ip
+      }
     end
   end
 end
