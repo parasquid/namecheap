@@ -6,19 +6,19 @@ module Namecheap
     ENDPOINT = (ENVIRONMENT == 'production' ? PRODUCTION : SANDBOX)
 
     def get(command, options = {})
-      request('get', command, options)
+      request 'get', command, options
     end
 
     def post(command, options = {})
-      request('post', command, options)
+      request 'post', command, options
     end
 
     def put(command, options = {})
-      request('post', command, options)
+      request 'post', command, options
     end
 
     def delete(command, options = {})
-      request('post', command, options)
+      request 'post', command, options
     end
 
     def request(method, command, options = {})
