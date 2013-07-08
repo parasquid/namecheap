@@ -39,7 +39,7 @@ module Namecheap
     # Gets the status of add funds request.
     # @see http://developer.namecheap.com/docs/doku.php?id=api-reference:users:getaddfundsstatus
     def get_add_funds_status(id, options = {})
-      options['TokenId'] = id
+      options = {:TokenId => id}.merge(options)
       get 'users.getAddFundsStatus', options
     end
 
