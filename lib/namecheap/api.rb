@@ -23,6 +23,7 @@ module Namecheap
 
     def request(method, command, options = {})
       options = init_args(options.merge :command => 'namecheap.' + command)
+      options.camelize_keys!
       
       case method
       when 'get'
@@ -40,7 +41,7 @@ module Namecheap
       options['ApiUser'] = options['UserName'] = Namecheap.username
       options['ApiKey'] = Namecheap.key
       options['ClientIp'] = Namecheap.client_ip
-      options.camelize_keys!
+      options
     end
   end
 end
