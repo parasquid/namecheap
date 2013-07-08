@@ -1,4 +1,7 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in namecheap.gemspec
+group :test do
+  gem 'webmock'
+end
+
 gemspec
