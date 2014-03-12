@@ -1,9 +1,16 @@
 require 'httparty'
 require 'monkey_patch'
 require 'pp'
-
-$LOAD_PATH.unshift("#{File.dirname(__FILE__)}/namecheap")
-Dir.glob("#{File.dirname(__FILE__)}/namecheap/*.rb") { |lib| require File.basename(lib, '.*') }
+require 'namecheap/version'
+require 'namecheap/api'
+require 'namecheap/config'
+require 'namecheap/domains'
+require 'namecheap/dns'
+require 'namecheap/ns'
+require 'namecheap/ssl'
+require 'namecheap/transfers'
+require 'namecheap/users'
+require 'namecheap/whois_guard'
 
 module Namecheap
 

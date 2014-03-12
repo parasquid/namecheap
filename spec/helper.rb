@@ -6,5 +6,5 @@ rescue LoadError
   require 'spec'
 end
 
-require File.dirname(__FILE__) + '/../lib/namecheap'
-$LOAD_PATH.unshift("#{File.dirname(__FILE__)}/../lib/namecheap")
+$:.unshift File.expand_path('../../lib',__FILE__)
+require 'namecheap'
