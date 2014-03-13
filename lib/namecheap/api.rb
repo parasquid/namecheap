@@ -51,10 +51,9 @@ module Namecheap
         end
       end
       options = {
-        :ApiUser  => Namecheap.username,
-        :UserName => Namecheap.username,
-        :ApiKey   => Namecheap.key,
-        :ClientIp => Namecheap.client_ip
+        :api_user  => Namecheap.config.username,
+        :api_key   => Namecheap.config.key,
+        :client_ip => Namecheap.config.client_ip
       }
     end
   end
