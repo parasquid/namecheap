@@ -1,3 +1,6 @@
+require 'active_support/core_ext/hash/keys'
+require 'active_support/core_ext/string/inflections'
+
 module Namecheap
   class Api
     SANDBOX = 'https://api.sandbox.namecheap.com/xml.response'
@@ -24,8 +27,9 @@ module Namecheap
     def request(method, command, options = {})
       command = 'namecheap.' + command
       options = init_args.merge(options).merge({:command => command})
-      options.camelize_keys!
-      
+      options.stringify_keys!
+      options.transform_keys! { |key| key.camelize }
+
       case method
       when 'get'
         HTTParty.get(ENDPOINT, options)
