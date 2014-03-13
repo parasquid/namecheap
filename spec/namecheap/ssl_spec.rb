@@ -1,6 +1,8 @@
 require 'helper'
 
 describe Namecheap::Ssl do
+  before { set_dummy_config }
+
   it 'should initialize' do
     Namecheap::Ssl.new
   end

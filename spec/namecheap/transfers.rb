@@ -1,6 +1,8 @@
 require 'helper'
 
 describe Namecheap::Transfers do
+  before { set_dummy_config }
+
   it 'should initialize' do
     Namecheap::Transfers.new
   end

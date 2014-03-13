@@ -1,6 +1,8 @@
 require 'helper'
 
 describe Namecheap::Whois_Guard do
+  before { set_dummy_config }
+
   it 'should initialize' do
     Namecheap::Whois_Guard.new
   end

@@ -1,6 +1,8 @@
 require 'helper'
 
 describe Namecheap::Users do
+  before { set_dummy_config }
+
   it 'should initialize' do
     Namecheap::Users.new
   end
