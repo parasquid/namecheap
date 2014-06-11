@@ -10,4 +10,8 @@ describe Namecheap::Ssl do
   it 'should be already initialized from the Namecheap namespace' do
     Namecheap.ssl.should_not be_nil
   end
+
+  it 'should not raise an error' do
+    Namecheap.ssl.get_list
+  end
 end

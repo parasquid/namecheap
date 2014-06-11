@@ -1,4 +1,3 @@
-require 'active_support/core_ext/hash/keys'
 require 'active_support/core_ext/string/inflections'
 
 module Namecheap
@@ -27,18 +26,20 @@ module Namecheap
     def request(method, command, options = {})
       command = 'namecheap.' + command
       options = init_args.merge(options).merge({:command => command})
-      options.stringify_keys!
-      options.transform_keys! { |key| key.camelize }
+      options.keys.each do |key|
+        options[key.to_s.camelize] = options.delete(key)
+      end
 
       case method
       when 'get'
-        HTTParty.get(ENDPOINT, options)
+        #raise options.inspect
+        HTTParty.get(ENDPOINT, { :query => options})
       when 'post'
-        HTTParty.post(ENDPOINT, options)
+        HTTParty.post(ENDPOINT, { :query => options})
       when 'put'
-        HTTParty.put(ENDPOINT, options)
+        HTTParty.put(ENDPOINT, { :query => options})
       when 'delete'
-        HTTParty.delete(ENDPOINT, options)
+        HTTParty.delete(ENDPOINT, { :query => options})
       end
     end
 
@@ -51,9 +52,10 @@ module Namecheap
         end
       end
       options = {
-        :api_user  => Namecheap.config.username,
-        :api_key   => Namecheap.config.key,
-        :client_ip => Namecheap.config.client_ip
+        api_user:  Namecheap.config.username,
+        user_name: Namecheap.config.username,
+        api_key:   Namecheap.config.key,
+        client_ip: Namecheap.config.client_ip
       }
     end
   end
