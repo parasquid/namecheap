@@ -1,48 +1,39 @@
 require File.dirname(__FILE__) + '/helper'
 
 describe Namecheap do
-  describe "initializating settings" do
+  before { reset_config }
 
-    before :each do
-      Namecheap.reset
+  context "with default config" do
+    subject { Namecheap }
+
+    its(:username) { should be_nil }
+    its(:key) { should be_nil }
+    its(:client_ip) { should be_nil }
+  end
+
+  describe '.configure' do
+    it 'should set the api key' do
+      expect {
+        Namecheap.configure do |config|
+          config.key = 'the_apikey'
+        end
+      }.to change { Namecheap::Config.key }.to('the_apikey')
     end
 
-    describe "with defaults" do
-      it "should contain a username" do
-        Namecheap.username.should == 'apiuser'
-      end
-      it "should contain a key" do
-        Namecheap.key.should == 'apikey'
-      end
-      it "should contain a client_ip" do
-        Namecheap.client_ip.should == '127.0.0.1'
-      end
+    it 'should set the username' do
+      expect {
+        Namecheap.configure do |config|
+          config.username = 'the_username'
+        end
+      }.to change { Namecheap::Config.username }.to('the_username')
     end
 
-    describe "with defaults overidden" do
-      it "should contain an overidden key" do
+    it 'should set the client_ip' do
+      expect {
         Namecheap.configure do |config|
-          config.key = 'newkey'
+          config.client_ip = 'the_client_ip'
         end
-
-        Namecheap.key.should == 'newkey'
-      end
-
-      it "should contain an overridden username" do
-        Namecheap.configure do |config|
-          config.username = 'newuser'
-        end
-
-        Namecheap.username.should == 'newuser'
-      end
-
-      it "should contain an overridden client_ip" do
-        Namecheap.configure do |config|
-          config.client_ip = '192.168.0.1'
-        end
-
-        Namecheap.client_ip.should == '192.168.0.1'
-      end
+      }.to change { Namecheap::Config.client_ip }.to('the_client_ip')
     end
   end
 end

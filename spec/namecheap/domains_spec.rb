@@ -1,6 +1,8 @@
-require File.dirname(__FILE__) + '/../helper'
+require 'helper'
 
 describe Namecheap::Domains do
+  before { set_dummy_config }
+
   it 'should initialize' do
     Namecheap::Domains.new
   end
