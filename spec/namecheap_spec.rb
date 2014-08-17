@@ -4,7 +4,7 @@ describe Namecheap do
   before { reset_config }
 
   context "with default config" do
-    subject { Namecheap }
+    subject { Namecheap.config }
 
     its(:username) { should be_nil }
     its(:key) { should be_nil }

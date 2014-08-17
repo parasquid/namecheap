@@ -1,5 +1,6 @@
 begin
   require 'rspec'
+  require 'rspec/its'
 rescue LoadError
   require 'rubygems'
   gem 'rspec'
