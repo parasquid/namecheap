@@ -3,7 +3,7 @@ module Namecheap
     class RequiredOptionMissing < RuntimeError ; end
     extend self
 
-    attr_accessor :key, :username, :client_ip
+    attr_accessor :key, :username, :client_ip, :endpoint
 
     # Configure namecheap from a hash. This is usually called after parsing a
     # yaml config file such as mongoid.yml.
