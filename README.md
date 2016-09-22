@@ -1,3 +1,5 @@
+A new version is being developed; track progress here: <https://github.com/parasquid/namecheap/tree/v2.0>
+
 Overview
 ========
 
