@@ -9,6 +9,7 @@ describe Namecheap do
     its(:username) { should be_nil }
     its(:key) { should be_nil }
     its(:client_ip) { should be_nil }
+    its(:endpoint) { should be_nil }
   end
 
   describe '.configure' do
@@ -34,6 +35,14 @@ describe Namecheap do
           config.client_ip = 'the_client_ip'
         end
       }.to change { Namecheap::Config.client_ip }.to('the_client_ip')
+    end
+
+    it 'should set the endpoint' do
+      expect {
+        Namecheap.configure do |config|
+          config.endpoint = 'the_endpoint'
+        end
+      }.to change { Namecheap::Config.endpoint }.to('the_endpoint')
     end
   end
 end
