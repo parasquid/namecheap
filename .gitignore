@@ -7,3 +7,4 @@ pkg/*
 config/namecheap.yml
 
 spect/examples.txt
+.env
