@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.description = %q{Ruby wrapper for the Namecheap API}
   s.summary     = s.description
   s.homepage    = 'https://github.com/parasquid/namecheap'
-  s.licenses    = ['GNU']
+  s.licenses    = ['LGPLV3']
 
   s.rubyforge_project = "namecheap"
 
@@ -22,6 +22,5 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency "rspec"
   s.add_development_dependency 'rspec-its'
-  s.add_runtime_dependency "httparty"
-  s.add_runtime_dependency "activesupport", '>= 3.0.0'
+  s.add_runtime_dependency "faraday"
 end
