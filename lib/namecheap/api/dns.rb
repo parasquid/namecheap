@@ -5,12 +5,11 @@ module Namecheap
     class Dns < Base
       def get_list(sld:, tld:)
         command = "namecheap.domains.dns.getList".freeze
-        url = endpoint(command, params: {
-            "SLD" => sld,
-            "TLD" => tld
-          }
-        )
-        execute url
+        params = {
+          "SLD" => sld,
+          "TLD" => tld
+        }
+        build_and_get command, params
       end
     end
   end

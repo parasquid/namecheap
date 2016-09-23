@@ -37,11 +37,20 @@ module Namecheap
         @environment == "production" ? PRODUCTION : SANDBOX
       end
 
-      def execute(url)
+      def build_and_get(command, params)
+        url = endpoint(command, params: params)
+        get url
+      end
+
+      def get(url)
         response = Faraday.get url
         response.body
       end
 
+      def post(url)
+        response = Faraday.post url
+        response.body
+      end
     end
   end
 end
