@@ -9,7 +9,10 @@ task :console do
   require "pry"
   require 'namecheap'
 
-  namecheap = Namecheap::API::Client.new(api_key: "x", api_user: "y")
+  namecheap = Namecheap::API::Client.new(
+    api_key: "56b4c87ef4fd49cb96d915c0db68194",
+    api_user: "apiexample"
+  )
 
   binding.pry
 end
