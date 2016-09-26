@@ -4,13 +4,32 @@ require "namecheap/api/dns"
 module Namecheap
   module API
     class Domains < Base
+      # https://www.namecheap.com/support/api/methods/domains/create.aspx
+      def create(
+        domain_name:,
+        years:,
+        registrant_first_name:,
+        registrant_last_name:,
+        registrant_address_1:,
+        registrant_city:,
+        registrant_state_province:,
+        registrant_postal_code:,
+        registrant_country:,
+        registrant_phone:,
+        registrant_email_address:,
+        params: {}
+      )
+        command = "namecheap.domains.create".freeze
 
-      def get_list(optional_params: {})
+      end
+
+      # https://www.namecheap.com/support/api/methods/domains/get-list.aspx
+      def get_list(params: {})
         command = "namecheap.domains.getList".freeze
-        params = optional_params
         build_and_get command, params
       end
 
+      # https://www.namecheap.com/support/api/methods/domains/get-contacts.aspx
       def get_contacts(domain_name:)
         command = "namecheap.domains.getContacts".freeze
         params = {"DomainName" => domain_name}
