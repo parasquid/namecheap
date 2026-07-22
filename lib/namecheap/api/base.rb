@@ -1,12 +1,12 @@
 require "faraday"
 require "addressable"
-require "faraday"
+require "namecheap/version"
 
 module Namecheap
   module API
     class Base
-      SANDBOX = 'https://api.sandbox.namecheap.com/xml.response'.freeze
-      PRODUCTION = 'https://api.namecheap.com/xml.response'.freeze
+      SANDBOX = "https://api.sandbox.namecheap.com/xml.response"
+      PRODUCTION = "https://api.namecheap.com/xml.response"
 
       def initialize(config)
         @config = config
@@ -22,11 +22,8 @@ module Namecheap
       private
 
       def endpoint(command, params: {})
-        uri_template.expand({
-          "query" => @query.merge({
-            "Command" => command
-          }).merge(params)
-        }).to_s
+        request_query = params.transform_keys(&:to_s).merge(@query).merge("Command" => command)
+        uri_template.expand("query" => request_query).to_s
       end
 
       def uri_template
@@ -34,21 +31,21 @@ module Namecheap
       end
 
       def uri_endpoint
-        @environment == "production" ? PRODUCTION : SANDBOX
+        (@environment == "production") ? PRODUCTION : SANDBOX
       end
 
       def build_and_get(command, params)
         url = endpoint(command, params: params)
-        get url
+        get(url)
       end
 
       def get(url)
-        response = Faraday.get url
+        response = Faraday.get(url)
         response.body
       end
 
       def post(url)
-        response = Faraday.post url
+        response = Faraday.post(url)
         response.body
       end
     end

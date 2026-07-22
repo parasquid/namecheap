@@ -1,0 +1,12 @@
+ruby_version: 3.3
+
+ignore:
+  - "lib/namecheap/api.rb"
+  - "lib/namecheap/config.rb"
+  - "lib/namecheap/dns.rb"
+  - "lib/namecheap/domains.rb"
+  - "lib/namecheap/ns.rb"
+  - "lib/namecheap/ssl.rb"
+  - "lib/namecheap/transfers.rb"
+  - "lib/namecheap/users.rb"
+  - "lib/namecheap/whois_guard.rb"

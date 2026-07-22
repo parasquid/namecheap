@@ -1,34 +1,71 @@
-Overview
-========
+# Namecheap v2
 
-There are three parts to this gem:
+This branch contains the experimental instance-based rewrite of the `namecheap` gem. Version `2.0.0.pre` is incomplete and unreleased. It requires Ruby 3.3 or newer.
 
-* Support - contains the various support objects such as exceptions, url builder, and HTTP connectivity.
+For the maintained 0.3.x API, use the repository's `master` branch.
 
-* Thin client - a very thin wrapper around the namecheap API. This aims to mirror the API documentation closely to make it easy to update the gem whenever the API changes.
+## Installation for development
 
-* OOP client - an Object-oriented layer that composes functionality from the thin client, so you can have conveniences such as `namecheap.is_domain_available? 'hashrocket.com' # => false`
+Clone this branch and install its dependencies:
 
-Documentation
------
-
-[http://rubygems.org/gems/namecheap](http://rubygems.org/gems/namecheap)
-
-This is the branch for the rewrite of the Namecheap gem.
-
-While efforts will be made to retain many of the concepts of the previous version,
-please expect that this version will NOT be backawards compatible.
-
-Usage
------
-
+```shell
+git switch v2.0
+bundle install
 ```
-namecheap = Namecheap::API::Client.new(
-  api_user: user,
-  api_key: key,
-  user_name: name, # optional, defaults to api_user
-  client_ip: ip # optional, defaults to the current server's ip
+
+The prerelease is not currently published to RubyGems.
+
+## API setup
+
+Enable API access in your Namecheap account and whitelist the public IPv4 address that will make requests. Sandbox and production use separate accounts and credentials.
+
+Create an isolated client for one account and environment:
+
+```ruby
+client = Namecheap::API::Client.new(
+  api_user: ENV.fetch("NAMECHEAP_API_USER"),
+  api_key: ENV.fetch("NAMECHEAP_API_KEY"),
+  user_name: ENV.fetch("NAMECHEAP_USERNAME"),
+  client_ip: ENV.fetch("NAMECHEAP_CLIENT_IP"),
+  environment: "sandbox"
 )
-
-namecheap.domains.get_contacts(domain_name: "parasquid.com")
 ```
+
+`user_name` defaults to `api_user`, and `environment` defaults to `sandbox`. The API user, key, username, and whitelisted client IP must be non-empty. The environment must be either `sandbox` or `production`.
+
+Avoid committing credentials to source control. Test against Namecheap's sandbox before using production.
+
+## Implemented API
+
+The current prototype implements these calls:
+
+```ruby
+client.domains.get_list
+client.domains.get_list(params: {"Page" => 2, "PageSize" => 50})
+client.domains.get_contacts(domain_name: "example.com")
+client.domains.dns.get_list(sld: "example", tld: "com")
+```
+
+Each call returns the raw Faraday response body. Caller parameters cannot replace `ApiUser`, `ApiKey`, `UserName`, `ClientIp`, or `Command`.
+
+Domain creation and the SSL, users, and WhoisGuard resources are intentionally unfinished and raise `NotImplementedError`.
+
+## Development
+
+Run the tests and Standard Ruby checks:
+
+```shell
+bundle exec rake
+```
+
+Build the prerelease locally:
+
+```shell
+bundle exec gem build namecheap.gemspec
+```
+
+Changing the version or pushing this branch does not publish the gem or create a release. Publishing remains a separate manual action.
+
+## License
+
+Copyright 2011 Tristan V. Gomez. This project is available under the GNU Lesser General Public License, version 3 or any later version. See [COPYING](COPYING).

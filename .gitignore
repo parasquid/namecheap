@@ -6,5 +6,5 @@ pkg/*
 /bak
 config/namecheap.yml
 
-spect/examples.txt
+spec/examples.txt
 .env

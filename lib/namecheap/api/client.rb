@@ -3,15 +3,20 @@ require "namecheap/api/domains"
 module Namecheap
   module API
     class Client
-      attr_accessor :config
-      def initialize(
-        api_user:, api_key:,
+      ENVIRONMENTS = %w[sandbox production].freeze
 
-        # optional params
+      attr_reader :config
+
+      def initialize(
+        api_user:,
+        api_key:,
+        client_ip:,
         user_name: api_user,
-        client_ip: "0.0.0.0",
         environment: "sandbox"
       )
+        validate_presence!(api_user: api_user, api_key: api_key, user_name: user_name, client_ip: client_ip)
+        validate_environment!(environment)
+
         @config = {
           api_user: api_user,
           api_key: api_key,
@@ -26,12 +31,28 @@ module Namecheap
       end
 
       def ssl
+        raise NotImplementedError, "SSL resources are not implemented in #{Namecheap::VERSION}"
       end
 
       def users
+        raise NotImplementedError, "User resources are not implemented in #{Namecheap::VERSION}"
       end
 
       def whoisguard
+        raise NotImplementedError, "WhoisGuard resources are not implemented in #{Namecheap::VERSION}"
+      end
+
+      private
+
+      def validate_presence!(options)
+        missing = options.find { |_, value| value.nil? || value.to_s.empty? }
+        raise ArgumentError, "#{missing.first} must be provided" if missing
+      end
+
+      def validate_environment!(environment)
+        return if ENVIRONMENTS.include?(environment)
+
+        raise ArgumentError, "environment must be sandbox or production"
       end
     end
   end

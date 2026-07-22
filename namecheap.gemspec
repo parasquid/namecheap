@@ -1,29 +1,33 @@
-# -*- encoding: utf-8 -*-
-$:.push File.expand_path("../lib", __FILE__)
-require "namecheap/version"
+require_relative "lib/namecheap/version"
 
-Gem::Specification.new do |s|
-  s.name        = "namecheap"
-  s.version     = Namecheap::VERSION
-  s.authors     = ["parasquid"]
-  s.email       = ["tristan.gomez@gmail.com"]
-  s.homepage    = "https://github.com/parasquid/namecheap"
-  s.description = %q{Ruby wrapper for the Namecheap API}
-  s.summary     = s.description
-  s.homepage    = 'https://github.com/parasquid/namecheap'
-  s.licenses    = ['LGPLV3']
+Gem::Specification.new do |spec|
+  spec.name = "namecheap"
+  spec.version = Namecheap::VERSION
+  spec.authors = ["parasquid"]
+  spec.email = ["tristan.gomez@gmail.com"]
+  spec.summary = "Ruby wrapper for the Namecheap API"
+  spec.description = "An experimental instance-based Ruby client for Namecheap's XML API."
+  spec.homepage = "https://github.com/parasquid/namecheap/tree/v2.0"
+  spec.license = "LGPL-3.0-or-later"
+  spec.required_ruby_version = ">= 3.3"
 
-  s.rubyforge_project = "namecheap"
+  spec.metadata = {
+    "bug_tracker_uri" => "https://github.com/parasquid/namecheap/issues",
+    "changelog_uri" => "https://github.com/parasquid/namecheap/blob/v2.0/CHANGELOG.md",
+    "source_code_uri" => "https://github.com/parasquid/namecheap/tree/v2.0",
+    "rubygems_mfa_required" => "true"
+  }
 
-  s.files         = `git ls-files`.split("\n")
-  s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
-  s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
-  s.require_paths = ["lib"]
+  spec.files = Dir.chdir(__dir__) do
+    Dir["lib/namecheap.rb", "lib/namecheap/version.rb", "lib/namecheap/api/**/*.rb", "CHANGELOG.md", "COPYING", "README.md"]
+  end
+  spec.require_paths = ["lib"]
 
-  s.add_development_dependency "rspec", ">= 3"
-  s.add_development_dependency 'rspec-given'
-  s.add_development_dependency 'guard-rspec'
-  s.add_development_dependency 'guard'
-  s.add_runtime_dependency "faraday"
-  s.add_runtime_dependency "addressable"
+  spec.add_dependency "addressable", ">= 2.8", "< 3"
+  spec.add_dependency "faraday", ">= 2.9", "< 3"
+
+  spec.add_development_dependency "rake", "~> 13.0"
+  spec.add_development_dependency "rspec", "~> 3.13"
+  spec.add_development_dependency "standard", "~> 1.55"
+  spec.add_development_dependency "webmock", "~> 3.0"
 end
