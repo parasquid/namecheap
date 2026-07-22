@@ -1,0 +1,70 @@
+# Coding Style and Conventions
+
+This document defines the implementation contract for the experimental v2 client. Follow it for all active code under `lib/namecheap/api/` and its tests. Older 0.3.x files directly under `lib/namecheap/` are retained only for reference; do not modify, require, package, or imitate them.
+
+## Architecture Boundaries
+
+- `Namecheap::API::Client` validates account configuration and exposes top-level resources.
+- Resource classes model Namecheap command groups. Nest resources when the upstream hierarchy does, for example `client.domains.dns`.
+- `Namecheap::API::Base` owns endpoints, authentication query fields, URL construction, and Faraday calls.
+- Resource classes must not call Faraday, select environments, or duplicate authentication logic.
+- Keep the public API instance-based. Do not introduce global configuration or singleton resources.
+
+## Resource Methods
+
+Write one explicit Ruby method per documented Namecheap command. Do not generate methods from a catalog or use `method_missing`.
+
+Use `snake_case` Ruby names and preserve the exact upstream command string:
+
+```ruby
+def get_info(domain_name:, params: {})
+  command = "namecheap.domains.getInfo"
+  params = params.merge("DomainName" => domain_name)
+  build_and_get(command, params)
+end
+```
+
+Required upstream parameters must be required keyword arguments. Accept optional and newly added upstream fields through a final `params: {}` keyword. Use Namecheap's exact parameter casing inside request hashes, such as `"DomainName"`, `"CertificateID"`, and `"TransferID"`.
+
+Merge required fields after caller-supplied parameters so callers cannot replace them. `Base` must continue merging authentication and `Command` last. Never allow `params` to override `ApiUser`, `ApiKey`, `UserName`, `ClientIp`, or `Command`.
+
+Use the HTTP method recommended by Namecheap's current documentation. Extend shared transport helpers in `Base` when POST support is needed; do not implement transport locally in a resource.
+
+## Resource Accessors
+
+Expose implemented resources from `Client` or their documented parent resource. An accessor returns the corresponding resource object configured with the same client configuration. Until a resource is implemented, keep an explicit `NotImplementedError`; never return `nil` for advertised functionality.
+
+Do not silently add compatibility aliases from the 0.3.x API. Any alias or public naming change requires documentation and dedicated tests.
+
+## Responses and Errors
+
+Current methods return the raw Faraday response body. Preserve that behavior until a deliberate response API is designed across all resources. Do not introduce command-specific parsing or exception behavior opportunistically.
+
+Configuration mistakes should fail before a request. Error messages must identify the invalid field. Never include API keys or other secrets in exceptions, logs, fixtures, or inspected URLs.
+
+## Tests
+
+Every resource method requires deterministic RSpec request-contract coverage. Use WebMock and assert:
+
+- sandbox or production endpoint;
+- exact `Command` value;
+- authentication and required query parameters;
+- representative optional parameters;
+- protected-field precedence;
+- raw response body returned to the caller.
+
+Real network access is forbidden in the unit suite. Use documentation-safe values such as `192.0.2.1`, `example.com`, and obviously fake credentials. Add construction and `NotImplementedError` tests for resource accessors.
+
+## Style and Completion Checklist
+
+Use two-space indentation, `CamelCase` constants, `snake_case` methods, double-quoted strings, and Standard Ruby formatting. Keep methods small and use descriptive local names; comments should explain upstream quirks rather than restate code.
+
+Before considering a change complete:
+
+1. Run `bundle exec rake`.
+2. Build with `bundle exec gem build namecheap.gemspec`.
+3. Confirm new active files are included in `spec.files` and legacy files remain excluded.
+4. Update README and changelog when public behavior or implemented command coverage changes.
+5. Verify CI on Ruby 3.3, 3.4, and 4.0.
+
+Version changes and successful builds do not publish a release. Tagging and RubyGems publication remain separate manual operations.
