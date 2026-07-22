@@ -22,8 +22,11 @@ module Namecheap
       private
 
       def endpoint(command, params: {})
-        request_query = params.transform_keys(&:to_s).merge(@query).merge("Command" => command)
-        uri_template.expand("query" => request_query).to_s
+        uri_template.expand("query" => request_params(command, params)).to_s
+      end
+
+      def request_params(command, params)
+        params.transform_keys(&:to_s).merge(@query).merge("Command" => command)
       end
 
       def uri_template
@@ -39,13 +42,17 @@ module Namecheap
         get(url)
       end
 
+      def build_and_post(command, params)
+        post(uri_endpoint, request_params(command, params))
+      end
+
       def get(url)
         response = Faraday.get(url)
         response.body
       end
 
-      def post(url)
-        response = Faraday.post(url)
+      def post(url, params)
+        response = Faraday.post(url, params)
         response.body
       end
     end

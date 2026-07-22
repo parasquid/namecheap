@@ -6,7 +6,7 @@ This document defines the implementation contract for the experimental v2 client
 
 - `Namecheap::API::Client` validates account configuration and exposes top-level resources.
 - Resource classes model Namecheap command groups. Nest resources when the upstream hierarchy does, for example `client.domains.dns`.
-- `Namecheap::API::Base` owns endpoints, authentication query fields, URL construction, and Faraday calls.
+- `Namecheap::API::Base` owns endpoints, authentication request fields, URL construction, and Faraday calls.
 - Resource classes must not call Faraday, select environments, or duplicate authentication logic.
 - Keep the public API instance-based. Do not introduce global configuration or singleton resources.
 
@@ -26,9 +26,13 @@ end
 
 Required upstream parameters must be required keyword arguments. Accept optional and newly added upstream fields through a final `params: {}` keyword. Use Namecheap's exact parameter casing inside request hashes, such as `"DomainName"`, `"CertificateID"`, and `"TransferID"`.
 
+When a command repeats a structured group, use a required hash or array keyword rather than an excessively long flat signature. Structured inputs use snake-case keys, validate required and unknown fields before a request, and serialize to exact upstream names. For example, contact groups use `registrant:` and `tech:` hashes, while numbered DNS fields use a `records:` array. Leave uncommon or TLD-specific fields in `params`.
+
 Merge required fields after caller-supplied parameters so callers cannot replace them. `Base` must continue merging authentication and `Command` last. Never allow `params` to override `ApiUser`, `ApiKey`, `UserName`, `ClientIp`, or `Command`.
 
 Use the HTTP method recommended by Namecheap's current documentation. Extend shared transport helpers in `Base` when POST support is needed; do not implement transport locally in a resource.
+
+POST commands send form-encoded request parameters rather than moving the same payload into a query string. Document replace-all commands prominently; callers must not mistake a partial payload for a patch.
 
 ## Resource Accessors
 
@@ -48,7 +52,7 @@ Every resource method requires deterministic RSpec request-contract coverage. Us
 
 - sandbox or production endpoint;
 - exact `Command` value;
-- authentication and required query parameters;
+- HTTP method, parameter location, authentication, and required request parameters;
 - representative optional parameters;
 - protected-field precedence;
 - raw response body returned to the caller.

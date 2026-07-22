@@ -58,7 +58,9 @@ RSpec.describe "Namecheap v2 requests" do
       .with(query: credentials.merge("Command" => "namecheap.domains.getContacts", "DomainName" => "example.com"))
       .to_return(body: "contacts")
 
-    expect(build_client.domains.get_contacts(domain_name: "example.com")).to eq("contacts")
+    expect(
+      build_client.domains.get_contacts(domain_name: "example.com", params: {DomainName: "override"})
+    ).to eq("contacts")
     expect(request).to have_been_requested.once
   end
 
@@ -67,25 +69,9 @@ RSpec.describe "Namecheap v2 requests" do
       .with(query: credentials.merge("Command" => "namecheap.domains.dns.getList", "SLD" => "example", "TLD" => "com"))
       .to_return(body: "dns")
 
-    expect(build_client.domains.dns.get_list(sld: "example", tld: "com")).to eq("dns")
+    expect(
+      build_client.domains.dns.get_list(sld: "example", tld: "com", params: {SLD: "override"})
+    ).to eq("dns")
     expect(request).to have_been_requested.once
-  end
-
-  it "marks domain creation as unfinished" do
-    expect do
-      build_client.domains.create(
-        domain_name: "example.com",
-        years: 1,
-        registrant_first_name: "Example",
-        registrant_last_name: "Person",
-        registrant_address_1: "1 Example Street",
-        registrant_city: "Example",
-        registrant_state_province: "CA",
-        registrant_postal_code: "90210",
-        registrant_country: "US",
-        registrant_phone: "+1.5555550100",
-        registrant_email_address: "person@example.com"
-      )
-    end.to raise_error(NotImplementedError, /Domain creation/)
   end
 end

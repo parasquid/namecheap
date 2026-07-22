@@ -35,20 +35,66 @@ client = Namecheap::API::Client.new(
 
 Avoid committing credentials to source control. Test against Namecheap's sandbox before using production.
 
-## Implemented API
+## Domains and DNS
 
-The current prototype implements these calls:
+The v2 client implements the domain and DNS commands available in 0.3.1 using keyword arguments:
 
 ```ruby
 client.domains.get_list
 client.domains.get_list(params: {"Page" => 2, "PageSize" => 50})
 client.domains.get_contacts(domain_name: "example.com")
+client.domains.get_tld_list
+client.domains.check(domain_names: ["example.com", "example.net"])
+client.domains.renew(domain_name: "example.com", years: 1)
+client.domains.get_info(domain_name: "example.com")
+
+client.domains.dns.set_default(sld: "example", tld: "com")
 client.domains.dns.get_list(sld: "example", tld: "com")
+client.domains.dns.get_hosts(sld: "example", tld: "com")
 ```
 
 Each call returns the raw Faraday response body. Caller parameters cannot replace `ApiUser`, `ApiKey`, `UserName`, `ClientIp`, or `Command`.
 
-Domain creation and the SSL, users, and WhoisGuard resources are intentionally unfinished and raise `NotImplementedError`.
+Domain creation and contact updates accept four contact hashes. Each requires `first_name`, `last_name`, `address_1`, `city`, `state_province`, `postal_code`, `country`, `phone`, and `email_address`:
+
+```ruby
+contact = {
+  first_name: "Example",
+  last_name: "Person",
+  address_1: "1 Example Street",
+  city: "Example City",
+  state_province: "CA",
+  postal_code: "90210",
+  country: "US",
+  phone: "+1.5555550100",
+  email_address: "person@example.com"
+}
+
+client.domains.create(
+  domain_name: "example.com",
+  years: 1,
+  registrant: contact,
+  tech: contact,
+  admin: contact,
+  aux_billing: contact
+)
+```
+
+DNS host replacement accepts the complete desired record set:
+
+```ruby
+client.domains.dns.set_hosts(
+  sld: "example",
+  tld: "com",
+  email_type: "MX",
+  records: [
+    {host_name: "@", record_type: "A", address: "192.0.2.10", ttl: 1800},
+    {host_name: "@", record_type: "MX", address: "mail.example.net", mx_pref: 10}
+  ]
+)
+```
+
+`set_hosts` is destructive: Namecheap deletes existing host records omitted from the request. The SSL, users, and WhoisGuard resources remain unfinished and raise `NotImplementedError`.
 
 ## Development
 
