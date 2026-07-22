@@ -1,98 +1,85 @@
-A new version is being developed; track progress here: <https://github.com/parasquid/namecheap/tree/v2.0>
+# Namecheap
 
-Overview
-========
+`namecheap` is a Ruby wrapper for the [Namecheap XML API](https://www.namecheap.com/support/api/intro/). It supports the existing domains, DNS, nameserver, transfer, SSL, user, and domain privacy commands exposed by the gem.
 
-Documentation
------
+Version 0.3.1 requires Ruby 3.3 or newer.
 
-[http://rubygems.org/gems/namecheap](http://rubygems.org/gems/namecheap)
+## Installation
 
-Usage
------
+Add the gem to your bundle:
 
-In your initializers, configure Namecheap like so:
+```ruby
+gem "namecheap"
+```
+
+Then run `bundle install`.
+
+## API setup
+
+Enable API access in your Namecheap account and whitelist the public IPv4 address that will make requests. Sandbox and production use separate accounts and credentials.
+
+The gem uses the sandbox endpoint unless `RACK_ENV` (or `Rails.env`) is `production`. Test requests against the sandbox before enabling production:
 
 ```ruby
 Namecheap.configure do |config|
-  config.key = 'apikey'
-  config.username = 'apiuser'
-  config.client_ip = '127.0.0.1'
+  config.key = ENV.fetch("NAMECHEAP_API_KEY")
+  config.username = ENV.fetch("NAMECHEAP_USERNAME")
+  config.client_ip = ENV.fetch("NAMECHEAP_CLIENT_IP")
 end
 ```
 
-Then you can do something like:
+Avoid committing API keys or account configuration to source control.
+
+## Usage
+
+The resource methods mirror Namecheap command names:
 
 ```ruby
 Namecheap.domains.get_list
+Namecheap.domains.check(["example.com", "example.net"])
+Namecheap.dns.get_hosts("example", "com")
 ```
 
-Please see the Namecheap API documentation for more information
+Additional command parameters can be passed as a final hash:
 
-About this project
--------------
+```ruby
+Namecheap.domains.get_list(page: 2, page_size: 50)
+```
 
-[![Code Climate](https://codeclimate.com/github/parasquid/namecheap/badges/gpa.svg)](https://codeclimate.com/github/parasquid/namecheap)
+Namecheap returns XML responses. This version returns the `HTTParty::Response` directly so existing applications can inspect the parsed response, status, and headers.
 
-Namecheap is a ruby wrapper for the [Namecheap API](http://developer.namecheap.com/docs/doku.php?id=api-reference:index)
+Configuration can also be loaded from an ERB-enabled YAML file. The selected top-level key must match `RACK_ENV`, or `development` when it is unset:
 
-The code was originally forked from https://github.com/hashrocket/namecheap
+```yaml
+development:
+  username: sandbox_user
+  key: <%= ENV.fetch("NAMECHEAP_API_KEY") %>
+  client_ip: 192.0.2.1
+```
 
-At [Mindvalley](http://www.mindvalley.com) (the company I work for) we have something
-called 'HackdayFridays' where we spend the whole day hacking on an interesting
-project that may or may not be directly related to the business. It was enacted
-so that the tech and production team can unwind from what can be a monotonous
-work week, and hack on something more interesting.
+```ruby
+Namecheap::Config.load!("config/namecheap.yml")
+```
 
-One of the proposed projects was a 'big red button' where someone can just type
-in the domain name, push a big red button, and magically:
+## Development
 
-* the domain name is purchased
-* the DNS is pointed to our load balancer
-* a subversion repository is created (with users)
-* a template is committed to the repository with default pages
-* a project is created in webistrano
-* the initial setup and deployment is done
+Install dependencies and run the test and style checks:
 
-Mostly everything is already automated except the domain name purchase and dns.
-We purchase most of our domains from Namecheap (and some from GoDaddy) and it was
-fortunate that Namecheap has an API. Unfortunately there didn't seem to be a gem
-that already existed.
+```shell
+bundle install
+bundle exec rake
+```
 
-A search brought me to HashRocket's namecheap API wrapper. It didn't have any of
-the purchase API wrappers, but it was a good starting point (and allowed me to
-study how seasoned pros would approach API wrappers). So I forked, published a
-gem based on the fork, and hacked on it. And that's how it all began :)
+Build a local gem without publishing it:
 
-Credits
--------
+```shell
+bundle exec gem build namecheap.gemspec
+```
 
-Tristan V. Gomez: tristan dot gomez at gmail dot com
+Publishing is intentionally manual. Changing the version does not publish a gem or create a release.
 
-[Hashrocket](http://www.hashrocket.com/) from where the original code was forked from
+## License
 
-[Mongoid](http://www.mongoid.org) from where the configuration code was modified from
+Copyright 2011 Tristan V. Gomez. This project is available under the GNU Lesser General Public License, version 3 or any later version. See [COPYING](COPYING).
 
-
-Plug!!
-------
-
-Mindvalley is [hiring](http://www.mindvalley.com/careers) :)
-
-License
--------
-
-Copyright (c) 2011 Tristan V. Gomez
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+The original API wrapper was forked from Hashrocket's `namecheap` project.

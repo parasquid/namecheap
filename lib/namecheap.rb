@@ -1,18 +1,16 @@
-require 'httparty'
-require 'pp'
-require 'namecheap/version'
-require 'namecheap/api'
-require 'namecheap/config'
-require 'namecheap/domains'
-require 'namecheap/dns'
-require 'namecheap/ns'
-require 'namecheap/ssl'
-require 'namecheap/transfers'
-require 'namecheap/users'
-require 'namecheap/whois_guard'
+require "httparty"
+require "namecheap/version"
+require "namecheap/api"
+require "namecheap/config"
+require "namecheap/domains"
+require "namecheap/dns"
+require "namecheap/ns"
+require "namecheap/ssl"
+require "namecheap/transfers"
+require "namecheap/users"
+require "namecheap/whois_guard"
 
 module Namecheap
-
   extend self
 
   # Sets the Namecheap configuration options. Best used by passing a block.
@@ -27,7 +25,7 @@ module Namecheap
   def configure
     block_given? ? yield(Config) : Config
   end
-  alias :config :configure
+  alias_method :config, :configure
 
   attr_accessor :domains, :dns, :ns, :transfers, :ssl, :users, :whois_guard
   self.domains = Namecheap::Domains.new
@@ -37,5 +35,4 @@ module Namecheap
   self.ssl = Namecheap::Ssl.new
   self.users = Namecheap::Users.new
   self.whois_guard = Namecheap::Whois_Guard.new
-
 end
