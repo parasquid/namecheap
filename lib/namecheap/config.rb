@@ -1,6 +1,9 @@
+require "erb"
+require "yaml"
+
 module Namecheap
   module Config
-    class RequiredOptionMissing < RuntimeError ; end
+    class RequiredOptionMissing < RuntimeError; end
     extend self
 
     attr_accessor :key, :username, :client_ip
@@ -26,10 +29,9 @@ module Namecheap
     #
     # @param [ String ] path The path to the file.
     def load!(path)
-      settings = YAML.load(ERB.new(File.new(path).read).result)[ENVIRONMENT]
-      if settings.present?
-        from_hash(settings)
-      end
+      contents = ERB.new(File.read(path)).result
+      settings = YAML.safe_load(contents, aliases: true)&.fetch(Namecheap::Api::ENVIRONMENT, nil)
+      from_hash(settings) if settings && !settings.empty?
     end
   end
 end
