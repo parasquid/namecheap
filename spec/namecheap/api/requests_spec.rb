@@ -74,4 +74,31 @@ RSpec.describe "Namecheap v2 requests" do
     ).to eq("dns")
     expect(request).to have_been_requested.once
   end
+
+  it "gets product pricing" do
+    request = stub_request(:get, Namecheap::API::Base::SANDBOX)
+      .with(
+        query: credentials.merge(
+          "Command" => "namecheap.users.getPricing",
+          "ProductType" => "DOMAIN",
+          "ProductCategory" => "DOMAINS",
+          "ActionName" => "REGISTER",
+          "ProductName" => "COM"
+        )
+      )
+      .to_return(body: "pricing")
+
+    response = build_client.users.get_pricing(
+      product_type: "DOMAIN",
+      params: {
+        ProductType: "override",
+        ProductCategory: "DOMAINS",
+        ActionName: "REGISTER",
+        ProductName: "COM"
+      }
+    )
+
+    expect(response).to eq("pricing")
+    expect(request).to have_been_requested.once
+  end
 end

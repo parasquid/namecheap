@@ -1,4 +1,5 @@
 require "namecheap/api/domains"
+require "namecheap/api/users"
 
 module Namecheap
   module API
@@ -35,7 +36,7 @@ module Namecheap
       end
 
       def users
-        raise NotImplementedError, "User resources are not implemented in #{Namecheap::VERSION}"
+        Users.new(@config)
       end
 
       def whoisguard

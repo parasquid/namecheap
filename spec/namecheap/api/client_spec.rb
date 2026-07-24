@@ -58,9 +58,12 @@ RSpec.describe Namecheap::API::Client do
     expect(client.domains).to be_a(Namecheap::API::Domains)
   end
 
+  it "creates a users resource" do
+    expect(client.users).to be_a(Namecheap::API::Users)
+  end
+
   {
     ssl: "SSL resources",
-    users: "User resources",
     whoisguard: "WhoisGuard resources"
   }.each do |resource, message|
     it "marks #{resource} as unfinished" do
