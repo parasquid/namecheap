@@ -1,0 +1,136 @@
+#!/usr/bin/env ruby
+
+require "json"
+require "optparse"
+require "stringio"
+require "namecheap/cli"
+require "namecheap/cli/env_file"
+
+class CliSandboxSmoke
+  def initialize(env_file:, domain_name: nil, output: $stdout, error: $stderr, cli: Namecheap::CLI)
+    @env_file = File.expand_path(env_file)
+    @domain_name = domain_name
+    @output = output
+    @error = error
+    @cli = cli
+    validate_environment!
+  end
+
+  def run
+    help = invoke("help", "domains", "register", "--json", credentials: false)
+    assert("help manifest") { help["path"] == "domains register" && help["paid"] == true }
+
+    domains = invoke("domains", "list", "--json")
+    assert("domains list") { domains.key?("data") && domains.key?("meta") }
+
+    check_domain = "ruby-cli-check-#{Time.now.utc.strftime("%Y%m%d%H%M%S")}.com"
+    check = invoke("domains", "check", check_domain, "--json")
+    assert("domains check") { find_value(check["data"], "domain") == check_domain }
+
+    price = invoke("domains", "price", check_domain, "--json")
+    assert("domains price") do
+      price.dig("data", "currency").to_s != "" && price.dig("data", "price").to_s != ""
+    end
+
+    domain_name = @domain_name || first_domain(domains["data"])
+    if domain_name
+      records = invoke("dns", "records", "list", domain_name, "--json")
+      assert("dns records list") { find_value(records["data"], "domain") == domain_name }
+
+      preview = invoke(
+        "dns", "records", "add", domain_name,
+        "--type", "TXT",
+        "--host", "cli-smoke-preview",
+        "--value", "no-write-performed",
+        "--ttl", "300",
+        "--dry-run",
+        "--json"
+      )
+      assert("dns records add --dry-run") do
+        preview.dig("meta", "dry_run") == true &&
+          preview.dig("data", "after").is_a?(Array)
+      end
+    else
+      @output.puts("SKIP dns commands (the sandbox account has no domains; pass --domain DOMAIN)")
+    end
+
+    @output.puts("CLI sandbox smoke checks passed.")
+  end
+
+  private
+
+  def validate_environment!
+    values = Namecheap::CLI::EnvFile.load(@env_file)
+    environment = values.fetch("NAMECHEAP_ENVIRONMENT", "sandbox")
+    raise "CLI sandbox smoke refuses environment=#{environment.inspect}" unless environment == "sandbox"
+  end
+
+  def invoke(*arguments, credentials: true)
+    stdout = StringIO.new
+    stderr = StringIO.new
+    arguments += ["--env-file", @env_file] if credentials
+    code = @cli.run(arguments, stdout: stdout, stderr: stderr, stdin: StringIO.new, env: ENV)
+    raise "#{arguments.take_while { |argument| !argument.start_with?("--") }.join(" ")} failed: #{stderr.string.strip}" unless code == 0
+
+    JSON.parse(stdout.string)
+  rescue JSON::ParserError => error
+    raise "#{arguments.join(" ")} returned invalid JSON: #{error.message}"
+  end
+
+  def assert(label)
+    raise "#{label} returned an unexpected result" unless yield
+
+    @output.puts("PASS #{label}")
+  end
+
+  def first_domain(value)
+    case value
+    when Hash
+      return value["name"] if value.key?("name") && value["name"].to_s.include?(".")
+
+      value.each_value do |child|
+        domain = first_domain(child)
+        return domain if domain
+      end
+    when Array
+      value.each do |child|
+        domain = first_domain(child)
+        return domain if domain
+      end
+    end
+    nil
+  end
+
+  def find_value(value, key)
+    return value[key] if value.is_a?(Hash) && value.key?(key)
+    return nil unless value.is_a?(Hash) || value.is_a?(Array)
+
+    children = value.is_a?(Hash) ? value.values : value
+    Array(children).each do |child|
+      found = find_value(child, key)
+      return found unless found.nil?
+    end
+    nil
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  begin
+    root = File.expand_path("..", __dir__)
+    options = {env_file: File.join(root, ".env.staging")}
+    OptionParser.new do |parser|
+      parser.banner = "Usage: bundle exec ruby script/cli_sandbox_smoke [options]"
+      parser.on("--env-file PATH", "Use a sandbox credential file (default: .env.staging)") do |path|
+        options[:env_file] = path
+      end
+      parser.on("--domain DOMAIN", "Use this existing sandbox domain for DNS checks") do |domain|
+        options[:domain_name] = domain
+      end
+    end.parse!
+
+    CliSandboxSmoke.new(**options).run
+  rescue => error
+    warn("FAIL #{error.message}")
+    exit(1)
+  end
+end

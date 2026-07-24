@@ -52,6 +52,8 @@ CLI code lives under `lib/namecheap/cli/`, with `exe/namecheap` as its only exec
 
 Every public command must appear in `Catalog`, support `namecheap help PATH --json`, and remain discoverable without loading config, credentials, or the network. Structured examples emitted by `--example` must be accepted by the same input validation used during execution.
 
+Update `script/cli_sandbox_smoke` whenever a CLI command is added or its syntax, output contract, or safety behavior changes. Exercise new read commands directly and mutation commands with `--dry-run` by default. If the sandbox cannot exercise a command, document the reason beside the smoke coverage and retain deterministic RSpec coverage. Keep `script/sandbox_smoke` updated independently for direct Ruby API coverage.
+
 Write normal results to stdout and prompts or errors to stderr. Preserve the JSON envelope (`data` and `meta`) and documented exit codes. Never accept an API key as a command-line option. Respect precedence in this order: command-line selectors, explicit env file, process environment, selected XDG profile, then sandbox defaults.
 
 All mutating commands support `--dry-run` and confirmation. Paid commands require an exact API quote. DNS record helpers must read the full zone, preview changes, re-read to detect drift, submit a complete replacement, and verify it afterward.

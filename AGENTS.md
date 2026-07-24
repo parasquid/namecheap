@@ -22,6 +22,8 @@ Use two-space indentation and Standard Ruby conventions. Classes use `CamelCase`
 
 Use RSpec and name files `*_spec.rb`. Every resource method needs request-contract coverage for its command, endpoint, parameters, and response body. WebMock must block real network access. Test invalid configuration and protected parameters when changing shared code. CI covers Ruby 3.3, 3.4, and 4.0.
 
+Keep both sandbox smoke surfaces current. When adding or changing an API command, update `script/sandbox_smoke` as applicable. When adding or changing a CLI command, update `script/cli_sandbox_smoke` in the same change. Default smoke runs must remain read-only or use `--dry-run`; put persistent writes behind an explicit lifecycle option.
+
 ## Commit & Pull Request Guidelines
 
 Use short, imperative subjects such as `Modernize v2 prototype`. Keep commits focused. Pull requests should explain behavior, incomplete API areas, and validation; link issues when available.

@@ -80,6 +80,14 @@ Run authentication and read-only API checks:
 bundle exec ruby script/sandbox_smoke
 ```
 
+Run the separate CLI smoke checks:
+
+```shell
+bundle exec ruby script/cli_sandbox_smoke
+```
+
+The CLI smoke validates machine-readable help, domain listing, availability, pricing, and—when the sandbox account contains a domain—DNS listing plus a DNS add preview. Pass `--domain DOMAIN` to select an existing sandbox domain explicitly. The preview always uses `--dry-run` and does not submit a DNS change.
+
 To register a persistent sandbox domain and verify domain, contact, and DNS writes:
 
 ```shell
