@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "faraday", ">= 2.9", "< 3"
 
   spec.add_development_dependency "rake", "~> 13.0"
+  spec.add_development_dependency "rexml", "~> 3.4"
   spec.add_development_dependency "rspec", "~> 3.13"
   spec.add_development_dependency "standard", "~> 1.55"
   spec.add_development_dependency "webmock", "~> 3.0"

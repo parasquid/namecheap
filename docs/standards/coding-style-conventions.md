@@ -59,6 +59,8 @@ Every resource method requires deterministic RSpec request-contract coverage. Us
 
 Real network access is forbidden in the unit suite. Use documentation-safe values such as `192.0.2.1`, `example.com`, and obviously fake credentials. Add construction and `NotImplementedError` tests for resource accessors.
 
+Keep staging tests opt-in and separate from the unit suite. They must load sandbox-only credentials from the ignored `.env.staging` file, refuse production environments, and avoid printing API keys or complete authenticated request URLs.
+
 ## Style and Completion Checklist
 
 Use two-space indentation, `CamelCase` constants, `snake_case` methods, double-quoted strings, and Standard Ruby formatting. Keep methods small and use descriptive local names; comments should explain upstream quirks rather than restate code.

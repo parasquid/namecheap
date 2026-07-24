@@ -1,0 +1,217 @@
+#!/usr/bin/env ruby
+
+require "optparse"
+require "rexml/document"
+require "namecheap"
+
+class SandboxEnvironment
+  def self.load!(path, env: ENV)
+    raise "staging environment file not found: #{path}" unless File.file?(path)
+
+    File.foreach(path) do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?("#")
+
+      key, value = line.split("=", 2)
+      raise "invalid staging environment line for #{key}" unless key&.match?(/\A[A-Z][A-Z0-9_]*\z/) && value
+
+      env[key] = unquote(value.strip)
+    end
+  end
+
+  def self.unquote(value)
+    return value[1...-1] if value.length >= 2 && ["'", '"'].include?(value[0]) && value[-1] == value[0]
+
+    value
+  end
+
+  private_class_method :unquote
+end
+
+class SandboxSmoke
+  REQUIRED_ENV = %w[
+    NAMECHEAP_API_USER
+    NAMECHEAP_API_KEY
+    NAMECHEAP_CLIENT_IP
+  ].freeze
+
+  def initialize(env: ENV, output: $stdout, client: nil)
+    @env = env
+    @output = output
+    validate_environment!
+    @client = client || build_client
+  end
+
+  def run(lifecycle: false, domain_name: nil)
+    domain_name ||= generated_domain(lifecycle ? "lifecycle" : "check")
+
+    assert_ok("getTldList", @client.domains.get_tld_list)
+    assert_ok("getList", @client.domains.get_list)
+
+    check_document = assert_ok("check", @client.domains.check(domain_names: [domain_name]))
+    available = result_attribute(check_document, "DomainCheckResult", "Available")
+    @output.puts("PASS check #{domain_name} (available=#{available})")
+
+    unless lifecycle
+      @output.puts("Safe sandbox smoke checks passed.")
+      return
+    end
+
+    raise "#{domain_name} is not available in the sandbox" unless available.casecmp?("true")
+
+    @output.puts("Running persistent lifecycle against #{domain_name}")
+    run_domain_lifecycle(domain_name)
+    @output.puts("Sandbox lifecycle smoke checks passed for #{domain_name}.")
+  end
+
+  private
+
+  def validate_environment!
+    environment = @env.fetch("NAMECHEAP_ENVIRONMENT", "sandbox")
+    raise "sandbox smoke tests refuse environment=#{environment.inspect}" unless environment == "sandbox"
+
+    missing = REQUIRED_ENV.select { |key| @env[key].nil? || @env[key].empty? }
+    raise "missing staging variables: #{missing.join(", ")}" if missing.any?
+  end
+
+  def build_client
+    Namecheap::API::Client.new(
+      api_user: @env.fetch("NAMECHEAP_API_USER"),
+      api_key: @env.fetch("NAMECHEAP_API_KEY"),
+      user_name: @env.fetch("NAMECHEAP_USERNAME", @env.fetch("NAMECHEAP_API_USER")),
+      client_ip: @env.fetch("NAMECHEAP_CLIENT_IP"),
+      environment: "sandbox"
+    )
+  end
+
+  def run_domain_lifecycle(domain_name)
+    contact = {
+      first_name: "Sandbox",
+      last_name: "Tester",
+      address_1: "1 Test Street",
+      city: "Phoenix",
+      state_province: "AZ",
+      postal_code: "85001",
+      country: "US",
+      phone: "+1.5555550100",
+      email_address: "sandbox@example.com"
+    }
+
+    create_document = assert_ok(
+      "create",
+      @client.domains.create(
+        domain_name: domain_name,
+        years: 1,
+        registrant: contact,
+        tech: contact,
+        admin: contact,
+        aux_billing: contact
+      )
+    )
+    assert_result(create_document, "DomainCreateResult", "Registered", "true")
+
+    assert_ok("getInfo", @client.domains.get_info(domain_name: domain_name))
+    assert_ok("getContacts", @client.domains.get_contacts(domain_name: domain_name))
+    assert_ok(
+      "setContacts",
+      @client.domains.set_contacts(
+        domain_name: domain_name,
+        registrant: contact,
+        tech: contact,
+        admin: contact,
+        aux_billing: contact
+      )
+    )
+    assert_ok("getRegistrarLock", @client.domains.get_registrar_lock(domain_name: domain_name))
+
+    sld, tld = domain_name.split(".", 2)
+    assert_ok("dns.setDefault", @client.domains.dns.set_default(sld: sld, tld: tld))
+    assert_ok("dns.getList", @client.domains.dns.get_list(sld: sld, tld: tld))
+
+    host_document = assert_ok(
+      "dns.setHosts",
+      @client.domains.dns.set_hosts(
+        sld: sld,
+        tld: tld,
+        email_type: "MX",
+        records: [
+          {host_name: "@", record_type: "A", address: "192.0.2.10", ttl: 1800},
+          {host_name: "mail", record_type: "A", address: "192.0.2.11", ttl: 1800},
+          {host_name: "@", record_type: "MX", address: "mail.#{domain_name}", mx_pref: 10, ttl: 1800}
+        ]
+      )
+    )
+    assert_result(host_document, "DomainDNSSetHostsResult", "IsSuccess", "true")
+    assert_ok("dns.getHosts", @client.domains.dns.get_hosts(sld: sld, tld: tld))
+  end
+
+  def assert_ok(label, xml)
+    document = REXML::Document.new(xml)
+    status = document.root&.attributes&.fetch("Status", nil)&.to_s
+    raise "#{label} returned malformed XML" unless status
+
+    unless status.casecmp?("OK")
+      errors = elements_named(document, "Error").map(&:text).compact
+      message = errors.empty? ? "unknown API error" : errors.join("; ")
+      raise "#{label} failed: #{message}"
+    end
+
+    @output.puts("PASS #{label}")
+    document
+  rescue REXML::ParseException
+    raise "#{label} returned invalid XML"
+  end
+
+  def assert_result(document, element_name, attribute_name, expected)
+    actual = result_attribute(document, element_name, attribute_name)
+    return if actual.casecmp?(expected)
+
+    raise "#{element_name}.#{attribute_name} was #{actual.inspect}, expected #{expected.inspect}"
+  end
+
+  def result_attribute(document, element_name, attribute_name)
+    element = elements_named(document, element_name).first
+    raise "response omitted #{element_name}" unless element
+
+    value = element.attributes[attribute_name]&.to_s
+    raise "response omitted #{element_name}.#{attribute_name}" unless value
+
+    value
+  end
+
+  def elements_named(document, name)
+    elements = []
+    visit = lambda do |element|
+      elements << element if element.name == name
+      element.each_element { |child| visit.call(child) }
+    end
+    visit.call(document.root) if document.root
+    elements
+  end
+
+  def generated_domain(purpose)
+    "ruby-dns-#{purpose}-#{Time.now.utc.strftime("%Y%m%d%H%M%S")}.com"
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  begin
+    options = {lifecycle: false}
+    OptionParser.new do |parser|
+      parser.banner = "Usage: bundle exec ruby script/sandbox_smoke [options]"
+      parser.on("--lifecycle", "Register a persistent sandbox domain and test DNS writes") do
+        options[:lifecycle] = true
+      end
+      parser.on("--domain DOMAIN", "Use this sandbox domain for --lifecycle") do |domain|
+        options[:domain_name] = domain
+      end
+    end.parse!
+
+    root = File.expand_path("..", __dir__)
+    SandboxEnvironment.load!(File.join(root, ".env.staging"))
+    SandboxSmoke.new.run(**options)
+  rescue => error
+    warn("FAIL #{error.message}")
+    exit(1)
+  end
+end

@@ -8,3 +8,4 @@ config/namecheap.yml
 
 spec/examples.txt
 .env
+.env.staging

@@ -35,6 +35,24 @@ client = Namecheap::API::Client.new(
 
 Avoid committing credentials to source control. Test against Namecheap's sandbox before using production.
 
+## Sandbox smoke tests
+
+Copy `.env.example` to the ignored `.env.staging` file and fill it with sandbox-only credentials. The smoke script reads this file directly and refuses production environments.
+
+Run authentication and read-only API checks:
+
+```shell
+bundle exec ruby script/sandbox_smoke
+```
+
+To register a persistent sandbox domain and verify domain, contact, and DNS writes:
+
+```shell
+bundle exec ruby script/sandbox_smoke --lifecycle
+```
+
+Namecheap does not delete or reset sandbox registrations. Use `--domain DOMAIN` with `--lifecycle` only when the supplied domain is available and may remain in the sandbox permanently.
+
 ## Domains and DNS
 
 The v2 client implements the domain and DNS commands available in 0.3.1 using keyword arguments:

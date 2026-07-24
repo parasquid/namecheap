@@ -28,4 +28,4 @@ Use short, imperative subjects such as `Modernize v2 prototype`. Keep commits fo
 
 ## Security & Releases
 
-Never commit API keys, usernames, client IP configuration, or `.env` files. Use sandbox credentials during manual integration testing. Version changes, branch pushes, and gem builds do not constitute a release; tagging and RubyGems publication are separate manual actions.
+Never commit API keys, usernames, client IP configuration, or environment files containing credentials. Manual staging tests must load sandbox credentials from `.env.staging`; never use production credentials for them. Version changes, branch pushes, and gem builds do not constitute a release; tagging and RubyGems publication are separate manual actions.
