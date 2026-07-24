@@ -46,6 +46,16 @@ Current methods return the raw Faraday response body. Preserve that behavior unt
 
 Configuration mistakes should fail before a request. Error messages must identify the invalid field. Never include API keys or other secrets in exceptions, logs, fixtures, or inspected URLs.
 
+## CLI Commands
+
+CLI code lives under `lib/namecheap/cli/`, with `exe/namecheap` as its only executable entrypoint. Keep routing and execution explicit: the command catalog is the shared source for help, examples, and machine-readable discovery, but must not dynamically generate API calls.
+
+Every public command must appear in `Catalog`, support `namecheap help PATH --json`, and remain discoverable without loading config, credentials, or the network. Structured examples emitted by `--example` must be accepted by the same input validation used during execution.
+
+Write normal results to stdout and prompts or errors to stderr. Preserve the JSON envelope (`data` and `meta`) and documented exit codes. Never accept an API key as a command-line option. Respect precedence in this order: command-line selectors, explicit env file, process environment, selected XDG profile, then sandbox defaults.
+
+All mutating commands support `--dry-run` and confirmation. Paid commands require an exact API quote. DNS record helpers must read the full zone, preview changes, re-read to detect drift, submit a complete replacement, and verify it afterward.
+
 ## Tests
 
 Every resource method requires deterministic RSpec request-contract coverage. Use WebMock and assert:

@@ -35,6 +35,41 @@ client = Namecheap::API::Client.new(
 
 Avoid committing credentials to source control. Test against Namecheap's sandbox before using production.
 
+## Command-line interface
+
+The gem includes a `namecheap` executable for interactive use and automation. Its help is deliberately self-contained: it does not read credentials or make network requests.
+
+```shell
+bundle exec namecheap --help
+bundle exec namecheap domains --help
+bundle exec namecheap help domains register
+bundle exec namecheap help --json
+```
+
+Use `.env.staging` directly for sandbox commands:
+
+```shell
+bundle exec namecheap domains list --env-file .env.staging
+bundle exec namecheap domains check example.com --env-file .env.staging --json
+bundle exec namecheap dns records list example.com --env-file .env.staging
+```
+
+Alternatively, save named profiles under the XDG config directory. API keys are prompted without echo and the config file is written with mode `0600`:
+
+```shell
+bundle exec namecheap config profiles add sandbox
+bundle exec namecheap config profiles use sandbox
+```
+
+Read commands default to human output; `--json` emits `{"data": ..., "meta": ...}` and `--raw` preserves the upstream XML. Mutating commands support `--dry-run` and ask for confirmation unless `--yes` is supplied. Registration and renewal require an exact API quote before confirmation. DNS record add, remove, and apply preserve the complete zone, show a diff, reject drift, and verify the submitted result.
+
+Generate valid structured-input examples with commands such as:
+
+```shell
+bundle exec namecheap help domains register --example contacts
+bundle exec namecheap help dns records apply --example zone --format json
+```
+
 ## Sandbox smoke tests
 
 Copy `.env.example` to the ignored `.env.staging` file and fill it with sandbox-only credentials. The smoke script reads this file directly and refuses production environments.
@@ -112,7 +147,7 @@ client.domains.dns.set_hosts(
 )
 ```
 
-`set_hosts` is destructive: Namecheap deletes existing host records omitted from the request. The SSL, users, and WhoisGuard resources remain unfinished and raise `NotImplementedError`.
+`set_hosts` is destructive: Namecheap deletes existing host records omitted from the request. `client.users.get_pricing` supports exact CLI quotes. The SSL and WhoisGuard resources remain unfinished and raise `NotImplementedError`.
 
 ## Development
 

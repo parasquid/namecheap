@@ -19,15 +19,18 @@ Gem::Specification.new do |spec|
   }
 
   spec.files = Dir.chdir(__dir__) do
-    Dir["lib/namecheap.rb", "lib/namecheap/version.rb", "lib/namecheap/api/**/*.rb", "CHANGELOG.md", "COPYING", "README.md"]
+    Dir["exe/namecheap", "lib/namecheap.rb", "lib/namecheap/version.rb", "lib/namecheap/api/**/*.rb", "lib/namecheap/cli/**/*.rb", "lib/namecheap/cli.rb", "CHANGELOG.md", "COPYING", "README.md"]
   end
+  spec.bindir = "exe"
+  spec.executables = ["namecheap"]
   spec.require_paths = ["lib"]
 
   spec.add_dependency "addressable", ">= 2.8", "< 3"
   spec.add_dependency "faraday", ">= 2.9", "< 3"
+  spec.add_dependency "rexml", ">= 3.4", "< 4"
+  spec.add_dependency "thor", ">= 1.5", "< 2"
 
   spec.add_development_dependency "rake", "~> 13.0"
-  spec.add_development_dependency "rexml", "~> 3.4"
   spec.add_development_dependency "rspec", "~> 3.13"
   spec.add_development_dependency "standard", "~> 1.55"
   spec.add_development_dependency "webmock", "~> 3.0"
