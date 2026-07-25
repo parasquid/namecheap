@@ -32,13 +32,13 @@ module Namecheap
 
       case method
       when "get"
-        HTTParty.get(ENDPOINT, query: options)
+        HTTParty.get(endpoint, query: options)
       when "post"
-        HTTParty.post(ENDPOINT, query: options)
+        HTTParty.post(endpoint, query: options)
       when "put"
-        HTTParty.put(ENDPOINT, query: options)
+        HTTParty.put(endpoint, query: options)
       when "delete"
-        HTTParty.delete(ENDPOINT, query: options)
+        HTTParty.delete(endpoint, query: options)
       end
     end
 
@@ -57,6 +57,19 @@ module Namecheap
         api_key: Namecheap.config.key,
         client_ip: Namecheap.config.client_ip
       }
+    end
+
+    private
+
+    def endpoint
+      case Namecheap.config.environment
+      when "sandbox"
+        SANDBOX
+      when "production"
+        PRODUCTION
+      else
+        ENDPOINT
+      end
     end
   end
 end

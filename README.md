@@ -28,6 +28,19 @@ Namecheap.configure do |config|
 end
 ```
 
+Applications can select the Namecheap environment independently of `RACK_ENV`
+or `Rails.env`. This is useful when a staging application runs in production
+mode but must continue using Namecheap's sandbox:
+
+```ruby
+Namecheap.configure do |config|
+  config.environment = "sandbox"
+end
+```
+
+Set `environment` to either `"sandbox"` or `"production"`. Leave it unset, or
+set it to `nil`, to retain automatic Rails/Rack environment selection.
+
 Avoid committing API keys or account configuration to source control.
 
 ## Usage
@@ -55,6 +68,7 @@ development:
   username: sandbox_user
   key: <%= ENV.fetch("NAMECHEAP_API_KEY") %>
   client_ip: 192.0.2.1
+  environment: sandbox
 ```
 
 ```ruby

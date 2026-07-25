@@ -5,6 +5,10 @@ RSpec.describe Namecheap::Api do
 
   before { set_dummy_config }
 
+  it "preserves the legacy init_args visibility" do
+    expect(api).to respond_to(:init_args)
+  end
+
   describe "configuration validation" do
     %i[username key client_ip].each do |option|
       it "identifies a missing #{option}" do
@@ -47,6 +51,24 @@ RSpec.describe Namecheap::Api do
       )
 
       api.get("domains.getList", client_ip: "192.0.2.10")
+    end
+
+    it "forces sandbox requests independently of the inferred environment" do
+      stub_const("#{described_class}::ENDPOINT", described_class::PRODUCTION)
+      Namecheap.config.environment = "sandbox"
+
+      expect(HTTParty).to receive(:get).with(described_class::SANDBOX, anything)
+
+      api.get("domains.getList")
+    end
+
+    it "forces production requests independently of the inferred environment" do
+      stub_const("#{described_class}::ENDPOINT", described_class::SANDBOX)
+      Namecheap.config.environment = "production"
+
+      expect(HTTParty).to receive(:get).with(described_class::PRODUCTION, anything)
+
+      api.get("domains.getList")
     end
   end
 end

@@ -6,7 +6,20 @@ module Namecheap
     class RequiredOptionMissing < RuntimeError; end
     extend self
 
+    ENVIRONMENTS = %w[sandbox production].freeze
+
     attr_accessor :key, :username, :client_ip
+    attr_reader :environment
+
+    def environment=(environment)
+      if environment.nil?
+        @environment = nil
+      elsif ENVIRONMENTS.include?(environment)
+        @environment = environment
+      else
+        raise ArgumentError, "environment must be sandbox or production"
+      end
+    end
 
     # Configure namecheap from a hash. This is usually called after parsing a
     # yaml config file such as mongoid.yml.
