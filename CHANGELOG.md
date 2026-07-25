@@ -8,6 +8,7 @@
 - Fix YAML configuration loading on modern Ruby.
 - Replace accidental live-network specs with deterministic request tests.
 - Modernize gem metadata, development tooling, and documentation.
+- Allow sandbox or production selection independently of the Rails/Rack environment.
 
 ## 0.3.0 (2014-08-18)
 
