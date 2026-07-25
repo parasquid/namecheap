@@ -25,6 +25,7 @@ module Namecheap
         --profile --env-file --environment --config --format --example --contact --contacts-file
         --params --input --years --action --type --host --value --mx-pref --ttl --email-type
         --amount --return-url --expected-price --currency
+        --count
       ].freeze
       BOOLEAN_OPTIONS = %w[--help --json --raw --yes --dry-run].freeze
 
@@ -54,6 +55,9 @@ module Namecheap
       rescue ArgumentError => error
         @stderr.puts("Error: #{error.message}")
         2
+      rescue Namecheap::API::Error => error
+        @stderr.puts("Error: #{error.message}")
+        1
       end
 
       private
@@ -173,6 +177,14 @@ module Namecheap
           {"password" => "replace-with-password"}
         when ["users password change", "password-change"]
           {"old_password" => "replace-with-old-password", "new_password" => "replace-with-new-password"}
+        when ["users addresses create", "address"], ["users addresses update", "address"]
+          {
+            "address_name" => "primary",
+            "default" => false,
+            "address" => user_profile_example.merge("state_province_choice" => "P")
+          }
+        when ["ssl dcv edit", "ssl-dcv"]
+          {"domain_methods" => {"example.com" => "CNAME_CSR_HASH", "www.example.com" => "HTTP_CSR_HASH"}}
         else
           raise Error, "unknown example #{name.inspect}; run namecheap help #{path.join(" ")} --json"
         end
@@ -225,6 +237,7 @@ module Namecheap
         when "dns forwarding list" then domain_read(arguments) { |api, domain| api.domains.dns.get_email_forwarding(domain_name: domain, params: api_params) }
         when "dns forwarding set" then set_forwarding(arguments)
         when /\Assl / then ssl_command(path.sub("ssl ", ""), arguments)
+        when /\Ausers addresses / then address_command(path.sub("users addresses ", ""), arguments)
         when /\Ausers / then user_api_command(path.sub("users ", ""), arguments)
         when /\Adomain-privacy / then privacy_command(path.sub("domain-privacy ", ""), arguments)
         else raise Error, "command is not implemented: #{path}"
@@ -684,6 +697,101 @@ module Namecheap
           mutate("resend SSL fulfillment email", certificate_id: certificate_id) do
             ssl.resend_fulfillment_email(certificate_id: certificate_id, params: api_params)
           end
+        when "sans purchase"
+          certificate_id = one_arg!(arguments)
+          count = Integer(required_option("--count"))
+          quote = expected_price.merge("certificate_id" => certificate_id, "count" => count)
+          paid_mutation("purchase additional SSL SANs", quote) do
+            ssl.purchase_more_sans(certificate_id: certificate_id, count: count, params: api_params)
+          end
+        when "revoke"
+          certificate_id = one_arg!(arguments)
+          certificate_type = required_option("--type")
+          mutate("irreversibly revoke SSL certificate", certificate_id: certificate_id, certificate_type: certificate_type) do
+            ssl.revoke_certificate(
+              certificate_id: certificate_id,
+              certificate_type: certificate_type,
+              params: api_params
+            )
+          end
+        when "dcv edit"
+          require_args!(arguments, 1)
+          raise Error, "expected CERTIFICATE_ID and at most one input file" if arguments.length > 2
+
+          certificate_id = arguments.first
+          input = load_document(arguments[1] || @options["--input"] || "-").transform_keys(&:to_s)
+          mutate(
+            "edit SSL domain-control validation",
+            certificate_id: certificate_id,
+            dcv_method: input["dcv_method"],
+            domain_methods: input["domain_methods"]
+          ) do
+            ssl.edit_dcv_method(
+              certificate_id: certificate_id,
+              dcv_method: input["dcv_method"],
+              domain_methods: input["domain_methods"],
+              params: api_params
+            )
+          end
+        end
+      end
+
+      def address_command(action, arguments)
+        addresses = client.users.addresses
+        case action
+        when "list"
+          require_args!(arguments, 0, exact: true)
+          render_response(addresses.get_list(params: api_params))
+        when "info"
+          render_response(addresses.get_info(address_id: one_arg!(arguments), params: api_params))
+        when "delete"
+          address_id = one_arg!(arguments)
+          mutate("delete user address", address_id: address_id) do
+            addresses.delete(address_id: address_id, params: api_params)
+          end
+        when "default"
+          address_id = one_arg!(arguments)
+          mutate("set default user address", address_id: address_id) do
+            addresses.set_default(address_id: address_id, params: api_params)
+          end
+        when "create"
+          input = load_document(input_path(arguments)).transform_keys(&:to_s)
+          address = input["address"]
+          raise Error, "input.address must be provided" unless address.is_a?(Hash)
+
+          address_name = input["address_name"]
+          raise Error, "input.address_name must be provided" if blank?(address_name)
+
+          default = input.key?("default") ? input["default"] : false
+          mutate("create user address", address_name: address_name, address: address, default: default) do
+            addresses.create(
+              address_name: address_name,
+              address: address,
+              default: default,
+              params: api_params
+            )
+          end
+        when "update"
+          require_args!(arguments, 1)
+          raise Error, "expected ADDRESS_ID and at most one input file" if arguments.length > 2
+
+          address_id = arguments.first
+          input = load_document(arguments[1] || @options["--input"] || "-").transform_keys(&:to_s)
+          address = input["address"]
+          raise Error, "input.address must be provided" unless address.is_a?(Hash)
+
+          address_name = input["address_name"]
+          raise Error, "input.address_name must be provided" if blank?(address_name)
+
+          mutate("update user address", address_id: address_id, address_name: address_name, address: address) do
+            addresses.update(
+              address_id: address_id,
+              address_name: address_name,
+              address: address,
+              default: input["default"],
+              params: api_params
+            )
+          end
         end
       end
 
@@ -833,7 +941,7 @@ module Namecheap
         result = XML.parse(body)
         verified = host_records(XML.parse(dns.get_hosts(sld: sld, tld: tld)))
         raise Error.new("Namecheap accepted the update but verification differs", exit_code: 1) unless verified == after
-        renderer.render(@options["--raw"] ? body : {"result" => result, "records" => verified}, meta: {"domain" => domain})
+        renderer.render(@options["--raw"] ? body.raw_body : {"result" => result, "records" => verified}, meta: {"domain" => domain})
       end
 
       def add_record(records)
@@ -870,11 +978,11 @@ module Namecheap
         values = values.flat_map { |value| value.is_a?(Array) ? value : [value] }
         values.select { |value| value.is_a?(Hash) }.map do |record|
           normalize_record(
-            "host_name" => record["name"] || record["host_name"],
-            "record_type" => record["type"] || record["record_type"],
-            "address" => record["address"],
-            "mx_pref" => record["mx_pref"],
-            "ttl" => record["ttl"]
+            "host_name" => record[:name] || record["name"] || record[:host_name] || record["host_name"],
+            "record_type" => record[:type] || record["type"] || record[:record_type] || record["record_type"],
+            "address" => record[:address] || record["address"],
+            "mx_pref" => record[:mx_pref] || record["mx_pref"],
+            "ttl" => record[:ttl] || record["ttl"]
           )
         end
       end
@@ -900,7 +1008,14 @@ module Namecheap
       def recursive_values(value, key)
         case value
         when Hash
-          own = value.key?(key) ? [value[key]] : []
+          symbol_key = key.to_sym
+          own = if value.key?(key)
+            [value[key]]
+          elsif value.key?(symbol_key)
+            [value[symbol_key]]
+          else
+            []
+          end
           own + value.values.flat_map { |child| recursive_values(child, key) }
         when Array
           value.flat_map { |child| recursive_values(child, key) }
@@ -913,7 +1028,13 @@ module Namecheap
       end
 
       def render_response(body, meta = {})
-        renderer.render(@options["--raw"] ? body : XML.parse(body), meta: meta.merge("profile" => selected_profile, "environment" => resolved_config[:environment]))
+        value = @options["--raw"] ? body.raw_body : XML.parse(body)
+        response_meta = meta.merge(
+          "profile" => selected_profile,
+          "environment" => resolved_config[:environment]
+        )
+        response_meta["paging"] = body.paging if body.paging
+        renderer.render(value, meta: response_meta)
       end
 
       def render(data, meta: {})

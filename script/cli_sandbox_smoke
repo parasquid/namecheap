@@ -3,6 +3,7 @@
 require "json"
 require "optparse"
 require "stringio"
+require "tempfile"
 require "namecheap/cli"
 require "namecheap/cli/env_file"
 
@@ -31,6 +32,35 @@ class CliSandboxSmoke
 
     balances = invoke("users", "balances", "--json")
     assert("user balances") { balances.key?("data") && balances.key?("meta") }
+
+    addresses = invoke("users", "addresses", "list", "--json")
+    assert("user addresses list") { addresses.key?("data") && addresses.key?("meta") }
+
+    with_document(address_document) do |path|
+      preview = invoke("users", "addresses", "create", path, "--dry-run", "--json")
+      assert("user addresses create --dry-run") { preview.dig("meta", "dry_run") == true }
+    end
+
+    ssl_revoke = invoke(
+      "ssl", "revoke", "12345",
+      "--type", "Standard SSL SSLcom",
+      "--dry-run", "--json"
+    )
+    assert("SSL revoke --dry-run") { ssl_revoke.dig("meta", "dry_run") == true }
+
+    with_document("domain_methods" => {"example.com" => "CNAME_CSR_HASH"}) do |path|
+      preview = invoke("ssl", "dcv", "edit", "12345", path, "--dry-run", "--json")
+      assert("SSL DCV edit --dry-run") { preview.dig("meta", "dry_run") == true }
+    end
+
+    ssl_sans = invoke(
+      "ssl", "sans", "purchase", "12345",
+      "--count", "1",
+      "--expected-price", "1.00",
+      "--currency", "USD",
+      "--dry-run", "--json"
+    )
+    assert("SSL SAN purchase --dry-run") { ssl_sans.dig("meta", "dry_run") == true }
 
     privacy = invoke("domain-privacy", "list", "--json")
     assert("domain privacy list") { privacy.key?("data") && privacy.key?("meta") }
@@ -93,6 +123,34 @@ class CliSandboxSmoke
     raise "#{label} returned an unexpected result" unless yield
 
     @output.puts("PASS #{label}")
+  end
+
+  def with_document(value)
+    file = Tempfile.new(["namecheap-smoke", ".json"])
+    file.write(JSON.generate(value))
+    file.close
+    yield(file.path)
+  ensure
+    file&.unlink
+  end
+
+  def address_document
+    {
+      "address_name" => "cli-smoke-preview",
+      "default" => false,
+      "address" => {
+        "email_address" => "sandbox@example.com",
+        "first_name" => "Sandbox",
+        "last_name" => "Tester",
+        "address_1" => "1 Test Street",
+        "city" => "Phoenix",
+        "state_province" => "AZ",
+        "state_province_choice" => "P",
+        "postal_code" => "85001",
+        "country" => "US",
+        "phone" => "+1.5555550100"
+      }
+    }
   end
 
   def first_domain(value)

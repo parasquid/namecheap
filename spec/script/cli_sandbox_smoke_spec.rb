@@ -59,6 +59,7 @@ RSpec.describe CliSandboxSmoke do
       array_including("domains", "transfers", "list"),
       array_including("ssl", "list"),
       array_including("users", "balances"),
+      array_including("users", "addresses", "list"),
       array_including("domain-privacy", "list"),
       array_including("dns", "records", "list"),
       array_including("dns", "records", "add", "--dry-run")

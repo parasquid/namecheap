@@ -20,58 +20,61 @@ RSpec.describe "Namecheap v2 requests" do
     )
   end
 
-  it "lists domains against sandbox and returns the raw body" do
+  def response_xml(value)
+    "<ApiResponse Status=\"OK\"><CommandResponse><TestResult Value=\"#{value}\"/></CommandResponse></ApiResponse>"
+  end
+
+  it "lists domains against sandbox and returns a parsed response with raw access" do
     request = stub_request(:get, Namecheap::API::Base::SANDBOX)
       .with(query: credentials.merge("Command" => "namecheap.domains.getList", "Page" => "2", "SearchTerm" => "hello world"))
       .to_return(body: "<ApiResponse Status=\"OK\"/>")
 
     response = build_client.domains.get_list(params: {Page: 2, SearchTerm: "hello world"})
 
-    expect(response).to eq("<ApiResponse Status=\"OK\"/>")
+    expect(response).to be_a(Namecheap::API::Response)
+    expect(response.raw_body).to eq("<ApiResponse Status=\"OK\"/>")
     expect(request).to have_been_requested.once
   end
 
   it "uses the production endpoint when requested" do
     request = stub_request(:get, Namecheap::API::Base::PRODUCTION)
       .with(query: credentials.merge("Command" => "namecheap.domains.getList"))
-      .to_return(body: "production")
+      .to_return(body: response_xml("production"))
 
-    expect(build_client(environment: "production").domains.get_list).to eq("production")
+    expect(build_client(environment: "production").domains.get_list.data).to eq(value: "production")
     expect(request).to have_been_requested.once
   end
 
   it "protects credentials and command from caller overrides" do
     request = stub_request(:get, Namecheap::API::Base::SANDBOX)
       .with(query: credentials.merge("Command" => "namecheap.domains.getList"))
-      .to_return(body: "protected")
+      .to_return(body: response_xml("protected"))
 
     response = build_client.domains.get_list(
       params: {ApiKey: "override", ClientIp: "203.0.113.1", Command: "namecheap.users.getBalances"}
     )
 
-    expect(response).to eq("protected")
+    expect(response.data).to eq(value: "protected")
     expect(request).to have_been_requested.once
   end
 
   it "gets domain contacts" do
     request = stub_request(:get, Namecheap::API::Base::SANDBOX)
       .with(query: credentials.merge("Command" => "namecheap.domains.getContacts", "DomainName" => "example.com"))
-      .to_return(body: "contacts")
+      .to_return(body: response_xml("contacts"))
 
-    expect(
-      build_client.domains.get_contacts(domain_name: "example.com", params: {DomainName: "override"})
-    ).to eq("contacts")
+    response = build_client.domains.get_contacts(domain_name: "example.com", params: {DomainName: "override"})
+    expect(response.data).to eq(value: "contacts")
     expect(request).to have_been_requested.once
   end
 
   it "lists domain nameservers through the nested DNS resource" do
     request = stub_request(:get, Namecheap::API::Base::SANDBOX)
       .with(query: credentials.merge("Command" => "namecheap.domains.dns.getList", "SLD" => "example", "TLD" => "com"))
-      .to_return(body: "dns")
+      .to_return(body: response_xml("dns"))
 
-    expect(
-      build_client.domains.dns.get_list(sld: "example", tld: "com", params: {SLD: "override"})
-    ).to eq("dns")
+    response = build_client.domains.dns.get_list(sld: "example", tld: "com", params: {SLD: "override"})
+    expect(response.data).to eq(value: "dns")
     expect(request).to have_been_requested.once
   end
 
@@ -86,7 +89,7 @@ RSpec.describe "Namecheap v2 requests" do
           "ProductName" => "COM"
         )
       )
-      .to_return(body: "pricing")
+      .to_return(body: response_xml("pricing"))
 
     response = build_client.users.get_pricing(
       product_type: "DOMAIN",
@@ -98,7 +101,7 @@ RSpec.describe "Namecheap v2 requests" do
       }
     )
 
-    expect(response).to eq("pricing")
+    expect(response.data).to eq(value: "pricing")
     expect(request).to have_been_requested.once
   end
 end

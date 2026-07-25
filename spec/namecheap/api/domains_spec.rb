@@ -57,7 +57,11 @@ RSpec.describe Namecheap::API::Domains do
   def stub_get(command, params = {})
     stub_request(:get, Namecheap::API::Base::SANDBOX)
       .with(query: credentials.merge(params).merge("Command" => command))
-      .to_return(body: command)
+      .to_return(body: response_xml(command))
+  end
+
+  def response_xml(value)
+    "<ApiResponse Status=\"OK\"><CommandResponse><TestResult Value=\"#{value}\"/></CommandResponse></ApiResponse>"
   end
 
   it "creates a domain using a form-encoded POST" do
@@ -67,7 +71,7 @@ RSpec.describe Namecheap::API::Domains do
       .merge("Command" => "namecheap.domains.create")
     request = stub_request(:post, Namecheap::API::Base::SANDBOX)
       .with(body: body)
-      .to_return(body: "created")
+      .to_return(body: response_xml("created"))
 
     response = domains.create(
       domain_name: "example.com",
@@ -79,14 +83,14 @@ RSpec.describe Namecheap::API::Domains do
       params: {PromotionCode: "SAVE", DomainName: "override", ApiKey: "override"}
     )
 
-    expect(response).to eq("created")
+    expect(response.data).to eq(value: "created")
     expect(request).to have_been_requested.once
   end
 
   it "lists TLDs" do
     request = stub_get("namecheap.domains.getTldList")
 
-    expect(domains.get_tld_list).to eq("namecheap.domains.getTldList")
+    expect(domains.get_tld_list.data).to eq(value: "namecheap.domains.getTldList")
     expect(request).to have_been_requested.once
   end
 
@@ -105,49 +109,49 @@ RSpec.describe Namecheap::API::Domains do
       params: {RegistrantNexus: "C11"}
     )
 
-    expect(response).to eq("namecheap.domains.setContacts")
+    expect(response.data).to eq(value: "namecheap.domains.setContacts")
     expect(request).to have_been_requested.once
   end
 
   it "checks a list of domains" do
     request = stub_get("namecheap.domains.check", "DomainList" => "example.com,example.net")
 
-    expect(domains.check(domain_names: ["example.com", "example.net"])).to eq("namecheap.domains.check")
+    expect(domains.check(domain_names: ["example.com", "example.net"]).data).to eq(value: "namecheap.domains.check")
     expect(request).to have_been_requested.once
   end
 
   it "reactivates a domain" do
     request = stub_get("namecheap.domains.reactivate", "DomainName" => "example.com", "YearsToAdd" => "1")
 
-    expect(domains.reactivate(domain_name: "example.com", params: {YearsToAdd: 1})).to eq("namecheap.domains.reactivate")
+    expect(domains.reactivate(domain_name: "example.com", years_to_add: 1).data).to eq(value: "namecheap.domains.reactivate")
     expect(request).to have_been_requested.once
   end
 
   it "renews a domain with required years" do
     request = stub_get("namecheap.domains.renew", "DomainName" => "example.com", "Years" => "2")
 
-    expect(domains.renew(domain_name: "example.com", years: 2)).to eq("namecheap.domains.renew")
+    expect(domains.renew(domain_name: "example.com", years: 2).data).to eq(value: "namecheap.domains.renew")
     expect(request).to have_been_requested.once
   end
 
   it "gets the registrar lock" do
     request = stub_get("namecheap.domains.getRegistrarLock", "DomainName" => "example.com")
 
-    expect(domains.get_registrar_lock(domain_name: "example.com")).to eq("namecheap.domains.getRegistrarLock")
+    expect(domains.get_registrar_lock(domain_name: "example.com").data).to eq(value: "namecheap.domains.getRegistrarLock")
     expect(request).to have_been_requested.once
   end
 
   it "sets the registrar lock" do
     request = stub_get("namecheap.domains.setRegistrarLock", "DomainName" => "example.com", "LockAction" => "UNLOCK")
 
-    expect(domains.set_registrar_lock(domain_name: "example.com", params: {LockAction: "UNLOCK"})).to eq("namecheap.domains.setRegistrarLock")
+    expect(domains.set_registrar_lock(domain_name: "example.com", params: {LockAction: "UNLOCK"}).data).to eq(value: "namecheap.domains.setRegistrarLock")
     expect(request).to have_been_requested.once
   end
 
   it "gets domain information" do
     request = stub_get("namecheap.domains.getInfo", "DomainName" => "example.com", "HostName" => "www.example.com")
 
-    expect(domains.get_info(domain_name: "example.com", params: {HostName: "www.example.com"})).to eq("namecheap.domains.getInfo")
+    expect(domains.get_info(domain_name: "example.com", host_name: "www.example.com").data).to eq(value: "namecheap.domains.getInfo")
     expect(request).to have_been_requested.once
   end
 

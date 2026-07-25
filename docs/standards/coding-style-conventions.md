@@ -42,7 +42,9 @@ Do not silently add compatibility aliases from the 0.3.x API. Any alias or publi
 
 ## Responses and Errors
 
-Current methods return the raw Faraday response body. Preserve that behavior until a deliberate response API is designed across all resources. Do not introduce command-specific parsing or exception behavior opportunistically.
+All resource methods return `Namecheap::API::Response`. The shared parser normalizes result keys to snake-case symbols while retaining the exact upstream body as `raw_body`. Keep parsing centralized and namespace-agnostic; do not introduce command-specific response objects.
+
+Namecheap error envelopes raise `Namecheap::API::ApiError`. HTTP and network failures raise `TransportError`, and empty or malformed XML raises `ParseError`. Errors expose safe command and response metadata without authenticated URLs or secret request fields.
 
 Configuration mistakes should fail before a request. Error messages must identify the invalid field. Never include API keys or other secrets in exceptions, logs, fixtures, or inspected URLs.
 

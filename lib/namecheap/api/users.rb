@@ -1,4 +1,5 @@
 require "namecheap/api/base"
+require "namecheap/api/addresses"
 
 module Namecheap
   module API
@@ -32,9 +33,25 @@ module Namecheap
       ].freeze
 
       # https://www.namecheap.com/support/api/methods/users/get-pricing/
-      def get_pricing(product_type:, params: {})
+      def get_pricing(
+        product_type:,
+        product_category: nil,
+        promotion_code: nil,
+        action_name: nil,
+        product_name: nil,
+        params: {}
+      )
         command = "namecheap.users.getPricing"
-        params = params.merge("ProductType" => product_type)
+        params = params
+          .merge(
+            {
+              "ProductCategory" => product_category,
+              "PromotionCode" => promotion_code,
+              "ActionName" => action_name,
+              "ProductName" => product_name
+            }.reject { |_, value| value.nil? }
+          )
+          .merge("ProductType" => product_type)
         build_and_get(command, params)
       end
 
@@ -103,6 +120,10 @@ module Namecheap
         command = "namecheap.users.resetPassword"
         params = params.merge("FindBy" => find_by, "FindByValue" => find_by_value)
         build_and_post(command, params, include_user_name: false)
+      end
+
+      def addresses
+        Addresses.new(@config)
       end
 
       private

@@ -36,14 +36,16 @@ RSpec.describe "Namecheap v2 parity resources" do
     request = stub_request(method, Namecheap::API::Base::SANDBOX)
     expected = expected_credentials.merge(params).merge("Command" => command).transform_values(&:to_s)
     (method == :get) ? request.with(query: expected) : request.with(body: expected)
-    request.to_return(body: command)
+    request.to_return(
+      body: "<ApiResponse Status=\"OK\"><CommandResponse><TestResult Value=\"#{command}\"/></CommandResponse></ApiResponse>"
+    )
     request
   end
 
   def verify(method, command, params = nil, include_user_name: true, **keyword_params)
     params ||= keyword_params
     request = expect_request(method, command, params, include_user_name: include_user_name)
-    expect(yield).to eq(command)
+    expect(yield.data).to eq(value: command)
     expect(request).to have_been_requested.once
   end
 

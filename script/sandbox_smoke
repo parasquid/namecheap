@@ -42,7 +42,7 @@ class SandboxSmoke
     @client = client || build_client
   end
 
-  def run(lifecycle: false, domain_name: nil)
+  def run(lifecycle: false, address_lifecycle: false, domain_name: nil)
     domain_name ||= generated_domain(lifecycle ? "lifecycle" : "check")
 
     assert_ok("getTldList", @client.domains.get_tld_list)
@@ -50,6 +50,7 @@ class SandboxSmoke
     assert_ok("transfers.getList", @client.domains.transfers.get_list)
     assert_ok("ssl.getList", @client.ssl.get_list)
     assert_ok("users.getBalances", @client.users.get_balances)
+    assert_ok("users.address.getList", @client.users.addresses.get_list)
     assert_ok("domainPrivacy.getList", @client.domain_privacy.get_list)
 
     check_document = assert_ok("check", @client.domains.check(domain_names: [domain_name]))
@@ -57,6 +58,7 @@ class SandboxSmoke
     @output.puts("PASS check #{domain_name} (available=#{available})")
 
     unless lifecycle
+      run_address_lifecycle if address_lifecycle
       @output.puts("Safe sandbox smoke checks passed.")
       return
     end
@@ -65,6 +67,7 @@ class SandboxSmoke
 
     @output.puts("Running persistent lifecycle against #{domain_name}")
     run_domain_lifecycle(domain_name)
+    run_address_lifecycle if address_lifecycle
     @output.puts("Sandbox lifecycle smoke checks passed for #{domain_name}.")
   end
 
@@ -149,7 +152,83 @@ class SandboxSmoke
     assert_ok("dns.getHosts", @client.domains.dns.get_hosts(sld: sld, tld: tld))
   end
 
+  def run_address_lifecycle
+    addresses = @client.users.addresses
+    original_default = default_address_id(addresses)
+    address_id = nil
+    name = "ruby-smoke-#{Time.now.utc.strftime("%Y%m%d%H%M%S")}"
+    address = {
+      email_address: "sandbox@example.com",
+      first_name: "Sandbox",
+      last_name: "Tester",
+      address_1: "1 Test Street",
+      city: "Phoenix",
+      state_province: "AZ",
+      state_province_choice: "P",
+      postal_code: "85001",
+      country: "US",
+      phone: "+1.5555550100"
+    }
+
+    create = addresses.create(address_name: name, address: address)
+    assert_ok("users.address.create", create)
+    address_id = find_value(create.data, :address_id)
+    raise "users.address.create omitted AddressId" unless address_id
+
+    assert_ok("users.address.getInfo", addresses.get_info(address_id: address_id))
+    assert_ok(
+      "users.address.update",
+      addresses.update(
+        address_id: address_id,
+        address_name: "#{name}-updated",
+        address: address.merge(organization: "Sandbox Smoke")
+      )
+    )
+    if original_default
+      assert_ok("users.address.setDefault", addresses.set_default(address_id: address_id))
+      assert_ok("users.address.restoreDefault", addresses.set_default(address_id: original_default))
+    else
+      @output.puts("SKIP users.address.setDefault (no restorable default address)")
+    end
+  ensure
+    if address_id && original_default
+      addresses.set_default(address_id: original_default)
+    end
+    assert_ok("users.address.delete", addresses.delete(address_id: address_id)) if address_id
+  end
+
+  def default_address_id(addresses)
+    list = addresses.get_list.data
+    entries = recursive_values(list, :list).flatten.select { |value| value.is_a?(Hash) }
+    entries.each do |entry|
+      address_id = entry[:address_id]
+      next unless address_id
+
+      info = addresses.get_info(address_id: address_id)
+      default = find_value(info.data, :default_yn)
+      return address_id if default == true || default.to_s.casecmp?("true") || default.to_s == "1"
+    end
+    nil
+  end
+
+  def recursive_values(value, key)
+    case value
+    when Hash
+      own = value.key?(key) ? [value[key]] : []
+      own + value.values.flat_map { |child| recursive_values(child, key) }
+    when Array
+      value.flat_map { |child| recursive_values(child, key) }
+    else
+      []
+    end
+  end
+
+  def find_value(value, key)
+    recursive_values(value, key).first
+  end
+
   def assert_ok(label, xml)
+    xml = xml.raw_body if xml.respond_to?(:raw_body)
     document = REXML::Document.new(xml)
     status = document.root&.attributes&.fetch("Status", nil)&.to_s
     raise "#{label} returned malformed XML" unless status
@@ -200,7 +279,7 @@ end
 
 if $PROGRAM_NAME == __FILE__
   begin
-    options = {lifecycle: false}
+    options = {lifecycle: false, address_lifecycle: false}
     OptionParser.new do |parser|
       parser.banner = "Usage: bundle exec ruby script/sandbox_smoke [options]"
       parser.on("--lifecycle", "Register a persistent sandbox domain and test DNS writes") do
@@ -208,6 +287,9 @@ if $PROGRAM_NAME == __FILE__
       end
       parser.on("--domain DOMAIN", "Use this sandbox domain for --lifecycle") do |domain|
         options[:domain_name] = domain
+      end
+      parser.on("--address-lifecycle", "Create, update, default, restore, and delete a sandbox user address") do
+        options[:address_lifecycle] = true
       end
     end.parse!
 

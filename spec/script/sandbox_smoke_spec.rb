@@ -16,6 +16,7 @@ RSpec.describe SandboxSmoke do
   let(:transfers) { instance_double(Namecheap::API::Transfers) }
   let(:ssl) { instance_double(Namecheap::API::Ssl) }
   let(:users) { instance_double(Namecheap::API::Users) }
+  let(:addresses) { instance_double(Namecheap::API::Addresses) }
   let(:privacy) { instance_double(Namecheap::API::DomainPrivacy) }
   let(:client) do
     instance_double(
@@ -40,6 +41,8 @@ RSpec.describe SandboxSmoke do
     allow(transfers).to receive(:get_list).and_return(response)
     allow(ssl).to receive(:get_list).and_return(response)
     allow(users).to receive(:get_balances).and_return(response)
+    allow(users).to receive(:addresses).and_return(addresses)
+    allow(addresses).to receive(:get_list).and_return(response)
     allow(privacy).to receive(:get_list).and_return(response)
     allow(domains).to receive(:check).with(domain_names: [kind_of(String)])
       .and_return(response("<DomainCheckResult Available=\"true\"/>"))

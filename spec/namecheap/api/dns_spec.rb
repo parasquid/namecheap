@@ -22,13 +22,17 @@ RSpec.describe Namecheap::API::Dns do
   def stub_get(command, params = {})
     stub_request(:get, Namecheap::API::Base::SANDBOX)
       .with(query: credentials.merge(params).merge("Command" => command))
-      .to_return(body: command)
+      .to_return(body: response_xml(command))
+  end
+
+  def response_xml(value)
+    "<ApiResponse Status=\"OK\"><CommandResponse><TestResult Value=\"#{value}\"/></CommandResponse></ApiResponse>"
   end
 
   it "sets Namecheap default DNS" do
     request = stub_get("namecheap.domains.dns.setDefault", "SLD" => "example", "TLD" => "com")
 
-    expect(dns.set_default(sld: "example", tld: "com")).to eq("namecheap.domains.dns.setDefault")
+    expect(dns.set_default(sld: "example", tld: "com").data).to eq(value: "namecheap.domains.dns.setDefault")
     expect(request).to have_been_requested.once
   end
 
@@ -46,21 +50,21 @@ RSpec.describe Namecheap::API::Dns do
       nameservers: ["ns1.example.net", "ns2.example.net"]
     )
 
-    expect(response).to eq("namecheap.domains.dns.setCustom")
+    expect(response.data).to eq(value: "namecheap.domains.dns.setCustom")
     expect(request).to have_been_requested.once
   end
 
   it "gets host records" do
     request = stub_get("namecheap.domains.dns.getHosts", "SLD" => "example", "TLD" => "com")
 
-    expect(dns.get_hosts(sld: "example", tld: "com")).to eq("namecheap.domains.dns.getHosts")
+    expect(dns.get_hosts(sld: "example", tld: "com").data).to eq(value: "namecheap.domains.dns.getHosts")
     expect(request).to have_been_requested.once
   end
 
   it "gets email forwarding" do
     request = stub_get("namecheap.domains.dns.getEmailForwarding", "DomainName" => "example.com")
 
-    expect(dns.get_email_forwarding(domain_name: "example.com")).to eq("namecheap.domains.dns.getEmailForwarding")
+    expect(dns.get_email_forwarding(domain_name: "example.com").data).to eq(value: "namecheap.domains.dns.getEmailForwarding")
     expect(request).to have_been_requested.once
   end
 
@@ -82,7 +86,7 @@ RSpec.describe Namecheap::API::Dns do
       ]
     )
 
-    expect(response).to eq("namecheap.domains.dns.setEmailForwarding")
+    expect(response.data).to eq(value: "namecheap.domains.dns.setEmailForwarding")
     expect(request).to have_been_requested.once
   end
 
@@ -103,7 +107,7 @@ RSpec.describe Namecheap::API::Dns do
     )
     request = stub_request(:post, Namecheap::API::Base::SANDBOX)
       .with(body: body)
-      .to_return(body: "hosts")
+      .to_return(body: response_xml("hosts"))
 
     response = dns.set_hosts(
       sld: "example",
@@ -116,7 +120,7 @@ RSpec.describe Namecheap::API::Dns do
       params: {SLD: "override", ApiKey: "override"}
     )
 
-    expect(response).to eq("hosts")
+    expect(response.data).to eq(value: "hosts")
     expect(request).to have_been_requested.once
   end
 

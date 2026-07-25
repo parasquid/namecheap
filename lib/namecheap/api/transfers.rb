@@ -21,8 +21,17 @@ module Namecheap
         build_and_post(command, params)
       end
 
-      def get_list(params: {})
+      def get_list(list_type: nil, search_term: nil, page: nil, page_size: nil, sort_by: nil, params: {})
         command = "namecheap.domains.transfer.getList"
+        params = params.merge(
+          {
+            "ListType" => list_type,
+            "SearchTerm" => search_term,
+            "Page" => page,
+            "PageSize" => page_size,
+            "SortBy" => sort_by
+          }.reject { |_, value| value.nil? }
+        )
         build_and_get(command, params)
       end
     end

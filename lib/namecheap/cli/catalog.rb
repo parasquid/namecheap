@@ -15,6 +15,8 @@ module Namecheap
         when "users update" then ["user-profile"]
         when "users login" then ["password"]
         when "users password change" then ["password-change"]
+        when "users addresses create", "users addresses update" then ["address"]
+        when "ssl dcv edit" then ["ssl-dcv"]
         else []
         end
       end
@@ -31,6 +33,10 @@ module Namecheap
           ["namecheap ssl activate 12345 request.csr --dry-run"]
         when "users create"
           ["namecheap users create user.yml --dry-run"]
+        when "users addresses create"
+          ["namecheap users addresses create address.yml --dry-run"]
+        when "ssl dcv edit"
+          ["namecheap ssl dcv edit 12345 dcv.yml --dry-run"]
         else
           []
         end
@@ -50,12 +56,17 @@ module Namecheap
           "users create",
           "users update",
           "users login",
-          "users password change"
+          "users password change",
+          "users addresses create",
+          "users addresses update",
+          "ssl dcv edit"
         ].include?(path)
         options += ["--years YEARS"] if path == "domains transfers create"
         options += ["--years YEARS", "--expected-price AMOUNT", "--currency CODE"] if path == "domain-privacy renew"
         options += ["--type TYPE", "--years YEARS", "--params FILE"] if ["ssl create", "ssl renew"].include?(path)
         options += ["--expected-price AMOUNT", "--currency CODE"] if path == "ssl create"
+        options += ["--count NUMBER", "--expected-price AMOUNT", "--currency CODE", "--params FILE"] if path == "ssl sans purchase"
+        options += ["--type TYPE", "--params FILE"] if path == "ssl revoke"
         options += ["--type TYPE", "--params FILE"] if ["ssl parse-csr", "ssl approver-emails", "ssl activate", "ssl reissue"].include?(path)
         options += ["--amount AMOUNT", "--return-url URL", "--params FILE"] if path == "users funds request"
         options += ["--params FILE"] if API_PARAM_COMMANDS.include?(path) && !options.include?("--params FILE")
@@ -94,11 +105,18 @@ module Namecheap
         "ssl reissue",
         "ssl resend approver",
         "ssl resend fulfillment",
+        "ssl sans purchase",
+        "ssl revoke",
+        "ssl dcv edit",
         "users create",
         "users update",
         "users password change",
         "users password reset",
         "users funds request",
+        "users addresses create",
+        "users addresses delete",
+        "users addresses default",
+        "users addresses update",
         "domain-privacy enable",
         "domain-privacy disable",
         "domain-privacy email rotate",
@@ -127,6 +145,9 @@ module Namecheap
         "ssl reissue",
         "ssl resend approver",
         "ssl resend fulfillment",
+        "ssl sans purchase",
+        "ssl revoke",
+        "ssl dcv edit",
         "users pricing",
         "users balances",
         "users create",
@@ -136,6 +157,12 @@ module Namecheap
         "users password reset",
         "users funds request",
         "users funds status",
+        "users addresses create",
+        "users addresses delete",
+        "users addresses info",
+        "users addresses list",
+        "users addresses default",
+        "users addresses update",
         "domain-privacy list",
         "domain-privacy enable",
         "domain-privacy disable",
@@ -192,6 +219,9 @@ module Namecheap
         ["ssl reissue", "Reissue an SSL certificate.", "CERTIFICATE_ID CSR_FILE", true, false],
         ["ssl resend approver", "Resend SSL approval or retry DCV.", "CERTIFICATE_ID", true, false],
         ["ssl resend fulfillment", "Resend the SSL fulfillment email.", "CERTIFICATE_ID", true, false],
+        ["ssl sans purchase", "Purchase additional SAN slots for an SSL certificate.", "CERTIFICATE_ID", true, true],
+        ["ssl revoke", "Irreversibly revoke a reissued SSL certificate.", "CERTIFICATE_ID", true, false],
+        ["ssl dcv edit", "Set or retry SSL domain-control validation.", "CERTIFICATE_ID [FILE]", true, false],
         ["users pricing", "Get generic product pricing.", "PRODUCT_TYPE", false, false],
         ["users balances", "Show account balances.", "", false, false],
         ["users create", "Create a reseller user.", "[FILE]", true, false],
@@ -201,6 +231,12 @@ module Namecheap
         ["users password reset", "Send a reseller password reset email.", "FIND_BY VALUE", true, false],
         ["users funds request", "Create an add-funds redirect.", "USER_NAME", true, false],
         ["users funds status", "Show add-funds request status.", "TOKEN_ID", false, false],
+        ["users addresses create", "Create a reseller-user address.", "[FILE]", true, false],
+        ["users addresses delete", "Delete a reseller-user address.", "ADDRESS_ID", true, false],
+        ["users addresses info", "Show a reseller-user address.", "ADDRESS_ID", false, false],
+        ["users addresses list", "List reseller-user addresses.", "", false, false],
+        ["users addresses default", "Set the reseller user's default address.", "ADDRESS_ID", true, false],
+        ["users addresses update", "Update a reseller-user address.", "ADDRESS_ID [FILE]", true, false],
         ["domain-privacy list", "List domain privacy subscriptions.", "", false, false],
         ["domain-privacy enable", "Enable a privacy subscription.", "ID FORWARDED_EMAIL", true, false],
         ["domain-privacy disable", "Disable a privacy subscription.", "ID", true, false],

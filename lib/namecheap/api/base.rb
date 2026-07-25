@@ -1,6 +1,7 @@
 require "faraday"
 require "addressable"
 require "namecheap/version"
+require "namecheap/api/response"
 
 module Namecheap
   module API
@@ -42,21 +43,37 @@ module Namecheap
 
       def build_and_get(command, params, include_user_name: true)
         url = endpoint(command, params: params, include_user_name: include_user_name)
-        get(url)
+        get(url, command)
       end
 
       def build_and_post(command, params, include_user_name: true)
-        post(uri_endpoint, request_params(command, params, include_user_name: include_user_name))
+        post(uri_endpoint, request_params(command, params, include_user_name: include_user_name), command)
       end
 
-      def get(url)
+      def get(url, command)
         response = Faraday.get(url)
-        response.body
+        response_for(response, command)
+      rescue Faraday::Error => error
+        raise TransportError.new("Namecheap request failed: #{error.class}", command: command)
       end
 
-      def post(url, params)
+      def post(url, params, command)
         response = Faraday.post(url, params)
-        response.body
+        response_for(response, command)
+      rescue Faraday::Error => error
+        raise TransportError.new("Namecheap request failed: #{error.class}", command: command)
+      end
+
+      def response_for(response, command)
+        unless response.success?
+          raise TransportError.new(
+            "Namecheap returned HTTP #{response.status}",
+            command: command,
+            http_status: response.status
+          )
+        end
+
+        Response.parse(response.body, command: command)
       end
     end
   end

@@ -1,6 +1,6 @@
 # Namecheap v2
 
-This branch contains the experimental instance-based rewrite of the `namecheap` gem. Version `2.0.0.pre` is incomplete and unreleased. It requires Ruby 3.3 or newer.
+This branch contains the experimental instance-based rewrite of the `namecheap` gem. Version `2.0.0.pre` covers the current official API catalog and remains unreleased. It requires Ruby 3.3 or newer.
 
 For the maintained 0.3.x API, use the repository's `master` branch.
 
@@ -96,6 +96,14 @@ bundle exec ruby script/sandbox_smoke --lifecycle
 
 Namecheap does not delete or reset sandbox registrations. Use `--domain DOMAIN` with `--lifecycle` only when the supplied domain is available and may remain in the sandbox permanently.
 
+An independent address lifecycle creates a temporary reseller-user address,
+updates and reads it, briefly tests the default-address command when an existing
+default can be restored, and deletes the temporary address:
+
+```shell
+bundle exec ruby script/sandbox_smoke --address-lifecycle
+```
+
 ## Domains and DNS
 
 The v2 client implements the domain and DNS commands available in 0.3.1 using keyword arguments:
@@ -114,7 +122,16 @@ client.domains.dns.get_list(sld: "example", tld: "com")
 client.domains.dns.get_hosts(sld: "example", tld: "com")
 ```
 
-Each call returns the raw Faraday response body. Caller parameters cannot replace `ApiUser`, `ApiKey`, `UserName`, `ClientIp`, or `Command`.
+Each call returns `Namecheap::API::Response`. Parsed result data uses snake-case symbol keys, and the exact upstream XML remains available through `response.raw_body`:
+
+```ruby
+response = client.domains.get_list(page: 2, page_size: 50)
+response.data
+response.paging
+response.raw_body
+```
+
+Namecheap API failures raise `Namecheap::API::ApiError`; transport and malformed-response failures raise `TransportError` and `ParseError`. Caller parameters cannot replace `ApiUser`, `ApiKey`, `UserName`, `ClientIp`, or `Command`.
 
 Domain creation and contact updates accept four contact hashes. Each requires `first_name`, `last_name`, `address_1`, `city`, `state_province`, `postal_code`, `country`, `phone`, and `email_address`:
 
@@ -170,6 +187,7 @@ client.domains.nameservers.get_info(
 client.domains.transfers.get_list
 client.ssl.get_list
 client.users.get_balances
+client.users.addresses.get_list
 client.domain_privacy.get_list
 ```
 
@@ -182,6 +200,11 @@ Every public resource command is discoverable through the CLI. Major groups
 include `domains nameservers`, `domains transfers`, `ssl`, `users`, and
 `domain-privacy`. Run `bundle exec namecheap help --json` for the complete
 manifest.
+
+The current official catalog contains 59 commands, including all six
+`users.address` operations and the SSL SAN purchase, certificate revocation,
+and DCV-edit operations. See [the coverage matrix](docs/api-coverage.md) for
+the Ruby, CLI, and smoke mapping.
 
 Durable secrets are never accepted as command-line values. Interactive commands
 prompt without echo; automation uses standard input or an input file accessible

@@ -43,6 +43,12 @@ module Namecheap
         tech:,
         admin:,
         aux_billing:,
+        idn_code: nil,
+        add_free_domain_privacy: nil,
+        domain_privacy_enabled: nil,
+        premium_domain: nil,
+        premium_price: nil,
+        eap_fee: nil,
         params: {}
       )
         command = "namecheap.domains.create"
@@ -51,13 +57,28 @@ module Namecheap
           .merge(contact_params("Tech", tech))
           .merge(contact_params("Admin", admin))
           .merge(contact_params("AuxBilling", aux_billing))
+          .merge(optional_params(
+            "IdnCode" => idn_code,
+            "AddFreeWhoisguard" => add_free_domain_privacy,
+            "WGEnabled" => domain_privacy_enabled,
+            "IsPremiumDomain" => premium_domain,
+            "PremiumPrice" => premium_price,
+            "EapFee" => eap_fee
+          ))
           .merge("DomainName" => domain_name, "Years" => years)
         build_and_post(command, params)
       end
 
       # https://www.namecheap.com/support/api/methods/domains/get-list/
-      def get_list(params: {})
+      def get_list(list_type: nil, search_term: nil, page: nil, page_size: nil, sort_by: nil, params: {})
         command = "namecheap.domains.getList"
+        params = params.merge(optional_params(
+          "ListType" => list_type,
+          "SearchTerm" => search_term,
+          "Page" => page,
+          "PageSize" => page_size,
+          "SortBy" => sort_by
+        ))
         build_and_get(command, params)
       end
 
@@ -97,16 +118,20 @@ module Namecheap
       end
 
       # https://www.namecheap.com/support/api/methods/domains/reactivate/
-      def reactivate(domain_name:, params: {})
+      def reactivate(domain_name:, years_to_add: nil, premium_price: nil, params: {})
         command = "namecheap.domains.reactivate"
-        params = params.merge("DomainName" => domain_name)
+        params = params
+          .merge(optional_params("YearsToAdd" => years_to_add, "PremiumPrice" => premium_price))
+          .merge("DomainName" => domain_name)
         build_and_get(command, params)
       end
 
       # https://www.namecheap.com/support/api/methods/domains/renew/
-      def renew(domain_name:, years:, params: {})
+      def renew(domain_name:, years:, premium_price: nil, params: {})
         command = "namecheap.domains.renew"
-        params = params.merge("DomainName" => domain_name, "Years" => years)
+        params = params
+          .merge(optional_params("PremiumPrice" => premium_price))
+          .merge("DomainName" => domain_name, "Years" => years)
         build_and_get(command, params)
       end
 
@@ -125,9 +150,11 @@ module Namecheap
       end
 
       # https://www.namecheap.com/support/api/methods/domains/get-info/
-      def get_info(domain_name:, params: {})
+      def get_info(domain_name:, host_name: nil, params: {})
         command = "namecheap.domains.getInfo"
-        params = params.merge("DomainName" => domain_name)
+        params = params
+          .merge(optional_params("HostName" => host_name))
+          .merge("DomainName" => domain_name)
         build_and_get(command, params)
       end
 
@@ -181,6 +208,10 @@ module Namecheap
 
       def blank?(value)
         value.nil? || value.to_s.empty?
+      end
+
+      def optional_params(values)
+        values.reject { |_, value| value.nil? }
       end
     end
   end

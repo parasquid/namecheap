@@ -63,6 +63,9 @@ RSpec.describe "Namecheap CLI parity" do
       ssl.renew
       ssl.resend.approver
       ssl.resend.fulfillment
+      ssl.sans.purchase
+      ssl.revoke
+      ssl.dcv.edit
       users.balances
       users.create
       users.funds.request
@@ -72,6 +75,12 @@ RSpec.describe "Namecheap CLI parity" do
       users.password.reset
       users.pricing
       users.update
+      users.addresses.create
+      users.addresses.delete
+      users.addresses.info
+      users.addresses.list
+      users.addresses.default
+      users.addresses.update
     ]
   end
 
@@ -142,6 +151,47 @@ RSpec.describe "Namecheap CLI parity" do
 
   it "requires an expected price for unquotable privacy renewal" do
     code, _stdout, stderr = run_cli("domain-privacy", "renew", "10", "--years", "1", "--dry-run")
+
+    expect(code).to eq(2)
+    expect(stderr).to include("--expected-price is required")
+  end
+
+  it "previews address creation and SSL completion mutations without requests" do
+    address = private_document(
+      "address.json",
+      {
+        "address_name" => "primary",
+        "default" => false,
+        "address" => {
+          "email_address" => "person@example.com",
+          "first_name" => "Example",
+          "last_name" => "Person",
+          "address_1" => "1 Example Street",
+          "city" => "Example City",
+          "state_province" => "CA",
+          "state_province_choice" => "P",
+          "postal_code" => "90210",
+          "country" => "US",
+          "phone" => "+1.5555550100"
+        }
+      }
+    )
+    request = stub_request(:any, Namecheap::API::Base::SANDBOX)
+
+    code, stdout, stderr = run_cli("users", "addresses", "create", address, "--dry-run", "--json")
+    expect(code).to eq(0), stderr
+    expect(JSON.parse(stdout).dig("meta", "dry_run")).to be(true)
+
+    code, stdout, stderr = run_cli(
+      "ssl", "revoke", "10", "--type", "Standard SSL SSLcom", "--dry-run", "--json"
+    )
+    expect(code).to eq(0), stderr
+    expect(JSON.parse(stdout).dig("meta", "dry_run")).to be(true)
+    expect(request).not_to have_been_requested
+  end
+
+  it "requires expected pricing for additional SSL SANs" do
+    code, _stdout, stderr = run_cli("ssl", "sans", "purchase", "10", "--count", "2", "--dry-run")
 
     expect(code).to eq(2)
     expect(stderr).to include("--expected-price is required")
