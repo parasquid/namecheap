@@ -213,6 +213,12 @@ only by its owner. Paid commands use an exact pricing API quote when available.
 Domain-privacy renewal, for which Namecheap exposes no quote API, requires
 `--expected-price` and `--currency` and verifies the returned charge afterward.
 
+## Roadmap
+
+GitHub [open issues](https://github.com/parasquid/namecheap/issues) are the
+project roadmap. Each planned change should have a focused issue that describes
+its scope and completion criteria.
+
 ## Development
 
 Run the tests and Standard Ruby checks:

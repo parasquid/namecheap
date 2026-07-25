@@ -49,6 +49,13 @@ CLI tests, and safe smoke coverage in the same change. Only omit CLI exposure
 when the user explicitly excludes it or the upstream operation cannot be made
 safe; document any exception beside the command coverage.
 
+## Roadmap
+
+GitHub open issues are the project roadmap. Before proposing new work or
+selecting the next task, review the repository's open issues. Keep planned work
+represented by focused issues rather than maintaining a separate roadmap
+document.
+
 ## Commit & Pull Request Guidelines
 
 Use short, imperative subjects such as `Modernize v2 prototype`. Keep commits focused. Pull requests should explain behavior, incomplete API areas, and validation; link issues when available.
