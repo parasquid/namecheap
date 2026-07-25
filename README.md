@@ -258,4 +258,6 @@ is a one-time account setting; the repository does not store a RubyGems API key.
 
 ## License
 
-Copyright 2011 Tristan V. Gomez. This project is available under the GNU Lesser General Public License, version 3 or any later version. See [COPYING](COPYING).
+Copyright © 2011–2026 Tristan V. Gomez and contributors. This project is
+available under the GNU Lesser General Public License, version 3 or any later
+version. See [COPYING](COPYING).
