@@ -1,0 +1,124 @@
+name: Release Gem
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Validate release tag
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          version=$(ruby -r ./lib/namecheap/version -e "print Namecheap::VERSION")
+          expected_tag="v${version}"
+
+          if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
+            echo "Release tag $GITHUB_REF_NAME does not match gem version $version." >&2
+            exit 1
+          fi
+
+          tag_type=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${GITHUB_REF_NAME}" --jq ".object.type")
+          if [[ "$tag_type" != "tag" ]]; then
+            echo "Release tag $GITHUB_REF_NAME must be an annotated signed tag." >&2
+            exit 1
+          fi
+
+          tag_object=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${GITHUB_REF_NAME}" --jq ".object.sha")
+          verified=$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_object}" --jq ".verification.verified")
+          if [[ "$verified" != "true" ]]; then
+            echo "GitHub does not report release tag $GITHUB_REF_NAME as verified." >&2
+            exit 1
+          fi
+
+          git fetch origin main
+          tag_commit=$(git rev-list -n 1 "$GITHUB_REF_NAME")
+          if ! git merge-base --is-ancestor "$tag_commit" origin/main; then
+            echo "Release tag $GITHUB_REF_NAME does not point to a commit on main." >&2
+            exit 1
+          fi
+
+          ruby - "$version" <<'RUBY'
+          version = ARGV.fetch(0)
+          heading = File.readlines("CHANGELOG.md", chomp: true).find do |line|
+            line.match?(/\A## \[?#{Regexp.escape(version)}\]?(?: - \d{4}-\d{2}-\d{2})?\z/)
+          end
+          abort "CHANGELOG.md does not contain a finalized heading for #{version}." unless heading
+          RUBY
+
+          prerelease=$(ruby -r rubygems -e "print Gem::Version.new(ARGV.fetch(0)).prerelease?" "$version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests and style checks
+        run: bundle exec rake
+
+      - name: Check RubyGems
+        id: rubygems
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          published=$(ruby <<'RUBY'
+          require "json"
+          require "net/http"
+
+          uri = URI("https://rubygems.org/api/v1/versions/namecheap.json")
+          versions = JSON.parse(Net::HTTP.get(uri))
+          print versions.any? { |release| release.fetch("number") == ENV.fetch("VERSION") }
+          RUBY
+          )
+          echo "published=$published" >> "$GITHUB_OUTPUT"
+
+      - name: Publish gem
+        if: steps.rubygems.outputs.published != 'true'
+        uses: rubygems/release-gem@v1.4.0
+        with:
+          attestations: true
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRERELEASE: ${{ steps.release.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "GitHub Release $GITHUB_REF_NAME already exists."
+            exit 0
+          fi
+
+          args=(
+            release create "$GITHUB_REF_NAME"
+            --verify-tag
+            --generate-notes
+            --title "$GITHUB_REF_NAME"
+          )
+          if [[ "$PRERELEASE" == "true" ]]; then
+            args+=(--prerelease)
+          fi
+          gh "${args[@]}"

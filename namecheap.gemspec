@@ -7,14 +7,14 @@ Gem::Specification.new do |spec|
   spec.email = ["tristan.gomez@gmail.com"]
   spec.summary = "Ruby wrapper for the Namecheap API"
   spec.description = "An experimental instance-based Ruby client for Namecheap's XML API."
-  spec.homepage = "https://github.com/parasquid/namecheap/tree/v2.0"
+  spec.homepage = "https://github.com/parasquid/namecheap"
   spec.license = "LGPL-3.0-or-later"
   spec.required_ruby_version = ">= 3.3"
 
   spec.metadata = {
     "bug_tracker_uri" => "https://github.com/parasquid/namecheap/issues",
-    "changelog_uri" => "https://github.com/parasquid/namecheap/blob/v2.0/CHANGELOG.md",
-    "source_code_uri" => "https://github.com/parasquid/namecheap/tree/v2.0",
+    "changelog_uri" => "https://github.com/parasquid/namecheap/blob/main/CHANGELOG.md",
+    "source_code_uri" => "https://github.com/parasquid/namecheap",
     "rubygems_mfa_required" => "true"
   }
 

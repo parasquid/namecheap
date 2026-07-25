@@ -1,6 +1,6 @@
 # Coding Style and Conventions
 
-This document defines the implementation contract for the experimental v2 client. Follow it for all active code under `lib/namecheap/api/` and its tests. Older 0.3.x files directly under `lib/namecheap/` are retained only for reference; do not modify, require, package, or imitate them.
+This document defines the implementation contract for the experimental v2 client on `main`. Follow it for all active code under `lib/namecheap/api/` and its tests. Older 0.3.x files directly under `lib/namecheap/` and the `legacy/0.3` branch are retained only for reference; do not modify, require, package, or imitate them.
 
 ## Architecture Boundaries
 
@@ -101,4 +101,8 @@ Before considering a change complete:
 4. Update README and changelog when public behavior or implemented command coverage changes.
 5. Verify CI on Ruby 3.3, 3.4, and 4.0.
 
-Version changes and successful builds do not publish a release. Tagging and RubyGems publication remain separate manual operations.
+Version changes and successful builds do not publish a release. After finalizing
+the changelog on `main`, create and push an annotated signed `vVERSION` tag that
+GitHub reports as verified. The release workflow validates that tag, re-runs the
+full checks, publishes through RubyGems trusted publishing, and creates the
+matching GitHub Release.

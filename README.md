@@ -1,15 +1,16 @@
-# Namecheap v2
+# Namecheap
 
-This branch contains the experimental instance-based rewrite of the `namecheap` gem. Version `2.0.0.pre` covers the current official API catalog and remains unreleased. It requires Ruby 3.3 or newer.
+The `main` branch contains the experimental instance-based rewrite of the `namecheap` gem. Version `2.0.0.pre` covers the current official API catalog and remains unreleased. It requires Ruby 3.3 or newer.
 
-For the maintained 0.3.x API, use the repository's `master` branch.
+The former 0.3.x implementation is preserved without planned maintenance on the
+`legacy/0.3` branch.
 
 ## Installation for development
 
-Clone this branch and install its dependencies:
+Clone the repository and install the `main` branch dependencies:
 
 ```shell
-git switch v2.0
+git switch main
 bundle install
 ```
 
@@ -226,7 +227,23 @@ Build the prerelease locally:
 bundle exec gem build namecheap.gemspec
 ```
 
-Changing the version or pushing this branch does not publish the gem or create a release. Publishing remains a separate manual action.
+Changing the version, pushing a branch, or building the gem does not publish a
+release. To release a finalized version:
+
+1. Update `Namecheap::VERSION` and replace the matching changelog's
+   `(unreleased)` heading with a finalized version heading.
+2. Merge the release preparation into `main` and confirm CI passes.
+3. Create and push an annotated signed tag that exactly matches the version:
+
+   ```shell
+   git tag -s v2.0.0.pre -m "Release v2.0.0.pre"
+   git push origin v2.0.0.pre
+   ```
+
+GitHub must recognize the tag signature as verified. The release workflow then
+re-runs the tests and style checks, publishes through RubyGems trusted
+publishing, and creates a matching GitHub Release. Prerelease gem versions
+produce prerelease GitHub Releases.
 
 ## License
 

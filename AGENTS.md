@@ -2,9 +2,12 @@
 
 ## Project Structure & Module Organization
 
-This branch contains the experimental v2 client. The public entrypoint is `lib/namecheap.rb`; active code lives under `lib/namecheap/api/`. `Client` owns configuration, resource classes expose commands, and `Base` handles URLs and Faraday requests.
+The `main` branch contains the experimental v2 client. The public entrypoint is `lib/namecheap.rb`; active code lives under `lib/namecheap/api/`. `Client` owns configuration, resource classes expose commands, and `Base` handles URLs and Faraday requests.
 
-Older 0.3.x files remain directly under `lib/namecheap/` for reference but are excluded from the v2 gem. Do not extend or require them. Tests mirror the active namespace under `spec/namecheap/api/`.
+Older 0.3.x files remain directly under `lib/namecheap/` for reference and the
+former release line is preserved on `legacy/0.3`; neither is part of active
+development. Do not extend or require the legacy files. Tests mirror the active
+namespace under `spec/namecheap/api/`.
 
 ## Build, Test, and Development Commands
 
@@ -52,7 +55,7 @@ Use short, imperative subjects such as `Modernize v2 prototype`. Keep commits fo
 
 ## Security & Releases
 
-Never commit API keys, usernames, client IP configuration, or environment files containing credentials. Manual staging tests must load sandbox credentials from `.env.staging`; never use production credentials for them. Version changes, branch pushes, and gem builds do not constitute a release; tagging and RubyGems publication are separate manual actions.
+Never commit API keys, usernames, client IP configuration, or environment files containing credentials. Manual staging tests must load sandbox credentials from `.env.staging`; never use production credentials for them. Version changes, branch pushes, and gem builds do not constitute a release. A release requires a finalized changelog entry and an annotated signed `vVERSION` tag from `main` that GitHub reports as verified. Pushing that tag runs the release workflow, which validates the tag and publishes through RubyGems trusted publishing without a long-lived API key.
 
 CLI commands must never accept durable secrets such as API keys, passwords, or
 transfer authorization codes as command-line values, because process listings
