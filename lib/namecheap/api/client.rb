@@ -26,7 +26,7 @@ module Namecheap
           user_name: user_name,
           client_ip: client_ip,
           environment: environment
-        }
+        }.freeze
       end
 
       def domains

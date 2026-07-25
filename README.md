@@ -32,7 +32,7 @@ client = Namecheap::API::Client.new(
 )
 ```
 
-`user_name` defaults to `api_user`, and `environment` defaults to `sandbox`. The API user, key, username, and whitelisted client IP must be non-empty. The environment must be either `sandbox` or `production`.
+`user_name` defaults to `api_user`, and `environment` defaults to `sandbox`. The API user, key, username, and [whitelisted client IP](https://www.namecheap.com/support/api/global-parameters/) must be non-empty. The environment must be either `sandbox` or `production`.
 
 Avoid committing credentials to source control. Test against Namecheap's sandbox before using production.
 

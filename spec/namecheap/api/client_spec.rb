@@ -20,6 +20,11 @@ RSpec.describe Namecheap::API::Client do
       environment: "sandbox"
     )
     expect(other.config).not_to equal(client.config)
+    expect(client.config).to be_frozen
+  end
+
+  it "prevents configuration from being changed after construction" do
+    expect { client.config[:client_ip] = "192.0.2.2" }.to raise_error(FrozenError)
   end
 
   it "accepts an explicit username and production environment" do
