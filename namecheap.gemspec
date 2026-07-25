@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
 
   spec.metadata = {
     "bug_tracker_uri" => "https://github.com/parasquid/namecheap/issues",
-    "changelog_uri" => "https://github.com/parasquid/namecheap/blob/master/CHANGELOG.md",
+    "changelog_uri" => "https://github.com/parasquid/namecheap/blob/legacy/0.3/CHANGELOG.md",
     "source_code_uri" => "https://github.com/parasquid/namecheap",
     "rubygems_mfa_required" => "true"
   }

@@ -80,17 +80,55 @@ Namecheap::Config.load!("config/namecheap.yml")
 Install dependencies and run the test and style checks:
 
 ```shell
-bundle install
-bundle exec rake
+mise exec -- bundle install
+mise exec -- bundle exec rake
 ```
 
 Build a local gem without publishing it:
 
 ```shell
-bundle exec gem build namecheap.gemspec
+mise exec -- bundle exec gem build namecheap.gemspec
 ```
 
-Publishing is intentionally manual. Changing the version does not publish a gem or create a release.
+### Manual release
+
+Releases from this legacy branch are intentionally manual. Start from a clean
+`legacy/0.3` checkout and confirm that `lib/namecheap/version.rb` and the dated
+changelog heading contain the same version. Then run:
+
+```shell
+mise exec -- bundle install
+mise exec -- bundle exec rake
+mise exec -- bundle exec gem build namecheap.gemspec
+mise exec -- ruby -rrubygems/package -e \
+  'spec = Gem::Package.new(ARGV.fetch(0)).spec; puts "#{spec.name} #{spec.version} (Ruby #{spec.required_ruby_version})"' \
+  namecheap-0.3.1.gem
+```
+
+Commit and push the finalized release changes before creating a signed,
+annotated tag for the exact release commit:
+
+```shell
+git tag -s v0.3.1 -m "Release 0.3.1"
+git push origin legacy/0.3
+git push origin v0.3.1
+```
+
+Publish the artifact to RubyGems manually. RubyGems may prompt for MFA:
+
+```shell
+mise exec -- gem push namecheap-0.3.1.gem
+```
+
+After RubyGems reports version 0.3.1 as published, create the corresponding
+GitHub Release:
+
+```shell
+gh release create v0.3.1 --verify-tag --generate-notes --title v0.3.1
+```
+
+Changing the version, building the gem, or pushing the branch does not publish
+a release.
 
 ## License
 

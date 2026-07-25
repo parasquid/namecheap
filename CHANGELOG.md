@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.1 (unreleased)
+## 0.3.1 (2026-07-25)
 
 - Require Ruby 3.3 or newer and add CI coverage for supported Ruby versions.
 - Fix required configuration validation for username and client IP.
