@@ -12,5 +12,7 @@
 - Add deterministic request tests, Standard Ruby checks, and modern gem metadata.
 - Add `users.getPricing` support for exact domain registration and renewal quotes.
 - Add an agent-discoverable CLI with XDG profiles, env-file configuration, human/JSON/raw output, guarded paid actions, and drift-safe DNS record workflows.
+- Reach current-adjusted 0.3.1 command parity with registered nameserver, transfer, SSL, user, and domain-privacy resources.
+- Expose every API operation through the CLI, including structured private input for secrets and guarded unquotable charges.
 
 This prerelease remains incomplete and is not published automatically.

@@ -7,6 +7,7 @@ module Namecheap
     class Base
       SANDBOX = "https://api.sandbox.namecheap.com/xml.response"
       PRODUCTION = "https://api.namecheap.com/xml.response"
+      PROTECTED_FIELDS = %w[ApiUser ApiKey UserName ClientIp Command].freeze
 
       def initialize(config)
         @config = config
@@ -21,12 +22,14 @@ module Namecheap
 
       private
 
-      def endpoint(command, params: {})
-        uri_template.expand("query" => request_params(command, params)).to_s
+      def endpoint(command, params: {}, include_user_name: true)
+        uri_template.expand("query" => request_params(command, params, include_user_name: include_user_name)).to_s
       end
 
-      def request_params(command, params)
-        params.transform_keys(&:to_s).merge(@query).merge("Command" => command)
+      def request_params(command, params, include_user_name: true)
+        caller_params = params.transform_keys(&:to_s).except(*PROTECTED_FIELDS)
+        credentials = include_user_name ? @query : @query.except("UserName")
+        caller_params.merge(credentials).merge("Command" => command)
       end
 
       def uri_template
@@ -37,13 +40,13 @@ module Namecheap
         (@environment == "production") ? PRODUCTION : SANDBOX
       end
 
-      def build_and_get(command, params)
-        url = endpoint(command, params: params)
+      def build_and_get(command, params, include_user_name: true)
+        url = endpoint(command, params: params, include_user_name: include_user_name)
         get(url)
       end
 
-      def build_and_post(command, params)
-        post(uri_endpoint, request_params(command, params))
+      def build_and_post(command, params, include_user_name: true)
+        post(uri_endpoint, request_params(command, params, include_user_name: include_user_name))
       end
 
       def get(url)

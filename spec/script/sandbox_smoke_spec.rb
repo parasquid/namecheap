@@ -13,7 +13,19 @@ RSpec.describe SandboxSmoke do
     }
   end
   let(:domains) { instance_double(Namecheap::API::Domains) }
-  let(:client) { instance_double(Namecheap::API::Client, domains: domains) }
+  let(:transfers) { instance_double(Namecheap::API::Transfers) }
+  let(:ssl) { instance_double(Namecheap::API::Ssl) }
+  let(:users) { instance_double(Namecheap::API::Users) }
+  let(:privacy) { instance_double(Namecheap::API::DomainPrivacy) }
+  let(:client) do
+    instance_double(
+      Namecheap::API::Client,
+      domains: domains,
+      ssl: ssl,
+      users: users,
+      domain_privacy: privacy
+    )
+  end
   let(:output) { StringIO.new }
 
   def response(result = nil)
@@ -24,6 +36,11 @@ RSpec.describe SandboxSmoke do
   it "runs safe checks without making lifecycle requests" do
     allow(domains).to receive(:get_tld_list).and_return(response)
     allow(domains).to receive(:get_list).and_return(response)
+    allow(domains).to receive(:transfers).and_return(transfers)
+    allow(transfers).to receive(:get_list).and_return(response)
+    allow(ssl).to receive(:get_list).and_return(response)
+    allow(users).to receive(:get_balances).and_return(response)
+    allow(privacy).to receive(:get_list).and_return(response)
     allow(domains).to receive(:check).with(domain_names: [kind_of(String)])
       .and_return(response("<DomainCheckResult Available=\"true\"/>"))
     expect(domains).not_to receive(:create)

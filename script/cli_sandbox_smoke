@@ -23,6 +23,18 @@ class CliSandboxSmoke
     domains = invoke("domains", "list", "--json")
     assert("domains list") { domains.key?("data") && domains.key?("meta") }
 
+    transfers = invoke("domains", "transfers", "list", "--json")
+    assert("domain transfers list") { transfers.key?("data") && transfers.key?("meta") }
+
+    certificates = invoke("ssl", "list", "--json")
+    assert("SSL list") { certificates.key?("data") && certificates.key?("meta") }
+
+    balances = invoke("users", "balances", "--json")
+    assert("user balances") { balances.key?("data") && balances.key?("meta") }
+
+    privacy = invoke("domain-privacy", "list", "--json")
+    assert("domain privacy list") { privacy.key?("data") && privacy.key?("meta") }
+
     check_domain = "ruby-cli-check-#{Time.now.utc.strftime("%Y%m%d%H%M%S")}.com"
     check = invoke("domains", "check", check_domain, "--json")
     assert("domains check") { find_value(check["data"], "domain") == check_domain }

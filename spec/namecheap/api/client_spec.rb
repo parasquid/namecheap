@@ -62,12 +62,11 @@ RSpec.describe Namecheap::API::Client do
     expect(client.users).to be_a(Namecheap::API::Users)
   end
 
-  {
-    ssl: "SSL resources",
-    whoisguard: "WhoisGuard resources"
-  }.each do |resource, message|
-    it "marks #{resource} as unfinished" do
-      expect { client.public_send(resource) }.to raise_error(NotImplementedError, /#{message}/)
-    end
+  it "creates an SSL resource" do
+    expect(client.ssl).to be_a(Namecheap::API::Ssl)
+  end
+
+  it "creates a domain privacy resource" do
+    expect(client.domain_privacy).to be_a(Namecheap::API::DomainPrivacy)
   end
 end

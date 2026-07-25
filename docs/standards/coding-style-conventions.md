@@ -52,11 +52,25 @@ CLI code lives under `lib/namecheap/cli/`, with `exe/namecheap` as its only exec
 
 Every public command must appear in `Catalog`, support `namecheap help PATH --json`, and remain discoverable without loading config, credentials, or the network. Structured examples emitted by `--example` must be accepted by the same input validation used during execution.
 
+Every public resource method must have corresponding CLI coverage in the same
+change unless the user explicitly excludes it or the upstream operation cannot
+be exposed safely. CLI coverage includes an explicit catalog route and dispatch,
+machine-readable help, deterministic tests, an input schema/example when
+structured data is required, and applicable safe smoke coverage.
+
 Update `script/cli_sandbox_smoke` whenever a CLI command is added or its syntax, output contract, or safety behavior changes. Exercise new read commands directly and mutation commands with `--dry-run` by default. If the sandbox cannot exercise a command, document the reason beside the smoke coverage and retain deterministic RSpec coverage. Keep `script/sandbox_smoke` updated independently for direct Ruby API coverage.
 
 Write normal results to stdout and prompts or errors to stderr. Preserve the JSON envelope (`data` and `meta`) and documented exit codes. Never accept an API key as a command-line option. Respect precedence in this order: command-line selectors, explicit env file, process environment, selected XDG profile, then sandbox defaults.
 
 All mutating commands support `--dry-run` and confirmation. Paid commands require an exact API quote. DNS record helpers must read the full zone, preview changes, re-read to detect drift, submit a complete replacement, and verify it afterward.
+
+Never accept durable secrets as command-line values. Prompt without echo for
+interactive use and use private input files or standard input for automation.
+Redact secret fields recursively from all previews and output. Short-lived or
+one-time tokens may be arguments only when explicitly justified and must still
+be redacted. When an upstream paid operation has no quote API, require an
+expected amount and currency, warn that the amount cannot be enforced before
+the charge, and compare it with the returned charge.
 
 ## Tests
 

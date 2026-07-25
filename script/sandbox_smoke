@@ -47,6 +47,10 @@ class SandboxSmoke
 
     assert_ok("getTldList", @client.domains.get_tld_list)
     assert_ok("getList", @client.domains.get_list)
+    assert_ok("transfers.getList", @client.domains.transfers.get_list)
+    assert_ok("ssl.getList", @client.ssl.get_list)
+    assert_ok("users.getBalances", @client.users.get_balances)
+    assert_ok("domainPrivacy.getList", @client.domain_privacy.get_list)
 
     check_document = assert_ok("check", @client.domains.check(domain_names: [domain_name]))
     available = result_attribute(check_document, "DomainCheckResult", "Available")

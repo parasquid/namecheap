@@ -155,7 +155,39 @@ client.domains.dns.set_hosts(
 )
 ```
 
-`set_hosts` is destructive: Namecheap deletes existing host records omitted from the request. `client.users.get_pricing` supports exact CLI quotes. The SSL and WhoisGuard resources remain unfinished and raise `NotImplementedError`.
+`set_hosts` is destructive: Namecheap deletes existing host records omitted from the request. `client.users.get_pricing` supports exact CLI quotes.
+
+## Additional resources
+
+The rewrite covers the maintained 0.3.1 command groups using nested resources:
+
+```ruby
+client.domains.nameservers.get_info(
+  sld: "example",
+  tld: "com",
+  nameserver: "ns1.example.com"
+)
+client.domains.transfers.get_list
+client.ssl.get_list
+client.users.get_balances
+client.domain_privacy.get_list
+```
+
+The current domain-privacy API no longer catalogs the old `allot`, `discard`,
+or `unallot` operations. The v2 resource instead exposes `change_email_address`,
+`enable`, `disable`, `get_list`, and `renew`, while preserving Namecheap's
+documented `whoisguard` wire-command names.
+
+Every public resource command is discoverable through the CLI. Major groups
+include `domains nameservers`, `domains transfers`, `ssl`, `users`, and
+`domain-privacy`. Run `bundle exec namecheap help --json` for the complete
+manifest.
+
+Durable secrets are never accepted as command-line values. Interactive commands
+prompt without echo; automation uses standard input or an input file accessible
+only by its owner. Paid commands use an exact pricing API quote when available.
+Domain-privacy renewal, for which Namecheap exposes no quote API, requires
+`--expected-price` and `--currency` and verifies the returned charge afterward.
 
 ## Development
 

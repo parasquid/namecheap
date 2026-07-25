@@ -1,4 +1,6 @@
 require "namecheap/api/domains"
+require "namecheap/api/domain_privacy"
+require "namecheap/api/ssl"
 require "namecheap/api/users"
 
 module Namecheap
@@ -32,15 +34,15 @@ module Namecheap
       end
 
       def ssl
-        raise NotImplementedError, "SSL resources are not implemented in #{Namecheap::VERSION}"
+        Ssl.new(@config)
       end
 
       def users
         Users.new(@config)
       end
 
-      def whoisguard
-        raise NotImplementedError, "WhoisGuard resources are not implemented in #{Namecheap::VERSION}"
+      def domain_privacy
+        DomainPrivacy.new(@config)
       end
 
       private

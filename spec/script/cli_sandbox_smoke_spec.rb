@@ -56,6 +56,10 @@ RSpec.describe CliSandboxSmoke do
     expect(output.string).to include("CLI sandbox smoke checks passed.")
     expect(cli.calls).to include(
       array_including("domains", "price"),
+      array_including("domains", "transfers", "list"),
+      array_including("ssl", "list"),
+      array_including("users", "balances"),
+      array_including("domain-privacy", "list"),
       array_including("dns", "records", "list"),
       array_including("dns", "records", "add", "--dry-run")
     )

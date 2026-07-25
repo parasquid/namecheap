@@ -1,5 +1,7 @@
 require "namecheap/api/base"
 require "namecheap/api/dns"
+require "namecheap/api/nameservers"
+require "namecheap/api/transfers"
 
 module Namecheap
   module API
@@ -131,6 +133,14 @@ module Namecheap
 
       def dns
         Dns.new(@config)
+      end
+
+      def nameservers
+        Nameservers.new(@config)
+      end
+
+      def transfers
+        Transfers.new(@config)
       end
 
       private
