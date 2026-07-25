@@ -564,9 +564,9 @@ module Namecheap
           require_args!(arguments, 0, exact: true)
           render_response(transfers.get_list(params: api_params))
         when "status"
-          render_response(transfers.get_status(transfer_id: one_arg!(arguments), params: api_params))
+          render_response(transfers.get_status(transfer_id: positive_integer_argument!("transfer_id", one_arg!(arguments)), params: api_params))
         when "resubmit"
-          transfer_id = one_arg!(arguments)
+          transfer_id = positive_integer_argument!("transfer_id", one_arg!(arguments))
           mutate("resubmit transfer", transfer_id: transfer_id) do
             transfers.update_status(transfer_id: transfer_id, resubmit: true, params: api_params)
           end
@@ -625,7 +625,8 @@ module Namecheap
           require_args!(arguments, 0, exact: true)
           render_response(ssl.get_list(params: api_params))
         when "info"
-          render_response(ssl.get_info(certificate_id: one_arg!(arguments), params: api_params))
+          certificate_id = positive_integer_argument!("certificate_id", one_arg!(arguments))
+          render_response(ssl.get_info(certificate_id: certificate_id, params: api_params))
         when "parse-csr"
           csr = read_file(one_arg!(arguments))
           render_response(ssl.parse_csr(csr: csr, params: api_params_with_type("CertificateType")))
@@ -658,7 +659,7 @@ module Namecheap
             ssl.create(years: years, certificate_type: type, params: api_params)
           end
         when "renew"
-          certificate_id = one_arg!(arguments)
+          certificate_id = positive_integer_argument!("certificate_id", one_arg!(arguments))
           years = Integer(required_option("--years"))
           type = required_option("--type")
           quote = product_quote(
@@ -679,6 +680,7 @@ module Namecheap
         when "activate", "reissue"
           require_args!(arguments, 2, exact: true)
           certificate_id, csr_path = arguments
+          certificate_id = positive_integer_argument!("certificate_id", certificate_id)
           csr = read_file(csr_path)
           mutate("#{action} SSL", certificate_id: certificate_id) do
             if action == "activate"
@@ -688,24 +690,24 @@ module Namecheap
             end
           end
         when "resend approver"
-          certificate_id = one_arg!(arguments)
+          certificate_id = positive_integer_argument!("certificate_id", one_arg!(arguments))
           mutate("resend SSL approver email", certificate_id: certificate_id) do
             ssl.resend_approver_email(certificate_id: certificate_id, params: api_params)
           end
         when "resend fulfillment"
-          certificate_id = one_arg!(arguments)
+          certificate_id = positive_integer_argument!("certificate_id", one_arg!(arguments))
           mutate("resend SSL fulfillment email", certificate_id: certificate_id) do
             ssl.resend_fulfillment_email(certificate_id: certificate_id, params: api_params)
           end
         when "sans purchase"
-          certificate_id = one_arg!(arguments)
+          certificate_id = positive_integer_argument!("certificate_id", one_arg!(arguments))
           count = Integer(required_option("--count"))
           quote = expected_price.merge("certificate_id" => certificate_id, "count" => count)
           paid_mutation("purchase additional SSL SANs", quote) do
             ssl.purchase_more_sans(certificate_id: certificate_id, count: count, params: api_params)
           end
         when "revoke"
-          certificate_id = one_arg!(arguments)
+          certificate_id = positive_integer_argument!("certificate_id", one_arg!(arguments))
           certificate_type = required_option("--type")
           mutate("irreversibly revoke SSL certificate", certificate_id: certificate_id, certificate_type: certificate_type) do
             ssl.revoke_certificate(
@@ -718,7 +720,7 @@ module Namecheap
           require_args!(arguments, 1)
           raise Error, "expected CERTIFICATE_ID and at most one input file" if arguments.length > 2
 
-          certificate_id = arguments.first
+          certificate_id = positive_integer_argument!("certificate_id", arguments.first)
           input = load_document(arguments[1] || @options["--input"] || "-").transform_keys(&:to_s)
           mutate(
             "edit SSL domain-control validation",
@@ -743,14 +745,15 @@ module Namecheap
           require_args!(arguments, 0, exact: true)
           render_response(addresses.get_list(params: api_params))
         when "info"
-          render_response(addresses.get_info(address_id: one_arg!(arguments), params: api_params))
+          address_id = positive_integer_argument!("address_id", one_arg!(arguments))
+          render_response(addresses.get_info(address_id: address_id, params: api_params))
         when "delete"
-          address_id = one_arg!(arguments)
+          address_id = positive_integer_argument!("address_id", one_arg!(arguments))
           mutate("delete user address", address_id: address_id) do
             addresses.delete(address_id: address_id, params: api_params)
           end
         when "default"
-          address_id = one_arg!(arguments)
+          address_id = positive_integer_argument!("address_id", one_arg!(arguments))
           mutate("set default user address", address_id: address_id) do
             addresses.set_default(address_id: address_id, params: api_params)
           end
@@ -775,7 +778,7 @@ module Namecheap
           require_args!(arguments, 1)
           raise Error, "expected ADDRESS_ID and at most one input file" if arguments.length > 2
 
-          address_id = arguments.first
+          address_id = positive_integer_argument!("address_id", arguments.first)
           input = load_document(arguments[1] || @options["--input"] || "-").transform_keys(&:to_s)
           address = input["address"]
           raise Error, "input.address must be provided" unless address.is_a?(Hash)
@@ -866,19 +869,20 @@ module Namecheap
         when "enable"
           require_args!(arguments, 2, exact: true)
           id, email = arguments
+          id = positive_integer_argument!("whoisguard_id", id)
           mutate("enable domain privacy", id: id, forwarded_to_email: email) do
             privacy.enable(whoisguard_id: id, forwarded_to_email: email, params: api_params)
           end
         when "disable"
-          id = one_arg!(arguments)
+          id = positive_integer_argument!("whoisguard_id", one_arg!(arguments))
           mutate("disable domain privacy", id: id) { privacy.disable(whoisguard_id: id, params: api_params) }
         when "email rotate"
-          id = one_arg!(arguments)
+          id = positive_integer_argument!("whoisguard_id", one_arg!(arguments))
           mutate("rotate domain privacy email", id: id) do
             privacy.change_email_address(whoisguard_id: id, params: api_params)
           end
         when "renew"
-          id = one_arg!(arguments)
+          id = positive_integer_argument!("whoisguard_id", one_arg!(arguments))
           years = Integer(required_option("--years"))
           expected = expected_price
           paid_mutation("renew domain privacy", expected.merge("id" => id, "years" => years)) do
@@ -1250,6 +1254,13 @@ module Namecheap
 
       def one_arg!(arguments)
         require_args!(arguments, 1, exact: true).first
+      end
+
+      def positive_integer_argument!(name, value)
+        parsed = Integer(value, exception: false)
+        raise Error, "#{name} must be a positive integer" unless parsed&.positive?
+
+        parsed
       end
 
       def require_args!(arguments, count, exact: false)

@@ -9,22 +9,22 @@ RSpec.describe Namecheap::API::Client do
     )
   end
 
-  it "builds isolated configuration with safe defaults" do
-    other = described_class.new(api_user: "other", api_key: "secret", client_ip: "192.0.2.2")
-
-    expect(client.config).to eq(
-      api_user: "api-user",
-      api_key: "api-key",
-      user_name: "api-user",
-      client_ip: "192.0.2.1",
-      environment: "sandbox"
-    )
-    expect(other.config).not_to equal(client.config)
-    expect(client.config).to be_frozen
+  it "exposes only the nonsecret environment" do
+    expect(client.environment).to eq("sandbox")
+    expect(client).not_to respond_to(:config)
   end
 
-  it "prevents configuration from being changed after construction" do
-    expect { client.config[:client_ip] = "192.0.2.2" }.to raise_error(FrozenError)
+  it "copies credential values before storing them" do
+    api_key = +"api-key"
+    configured = described_class.new(api_user: "api-user", api_key: api_key, client_ip: "192.0.2.1")
+    api_key.replace("changed")
+
+    request = stub_request(:get, Namecheap::API::Base::SANDBOX)
+      .with(query: hash_including("ApiKey" => "api-key"))
+      .to_return(body: "<ApiResponse Status=\"OK\"/>")
+    configured.domains.get_list
+
+    expect(request).to have_been_requested.once
   end
 
   it "accepts an explicit username and production environment" do
@@ -36,7 +36,7 @@ RSpec.describe Namecheap::API::Client do
       environment: "production"
     )
 
-    expect(configured.config).to include(user_name: "account-user", environment: "production")
+    expect(configured.environment).to eq("production")
   end
 
   %i[api_user api_key user_name client_ip].each do |option|
@@ -57,6 +57,15 @@ RSpec.describe Namecheap::API::Client do
     expect do
       described_class.new(api_user: "api-user", api_key: "api-key", client_ip: "192.0.2.1", environment: "staging")
     end.to raise_error(ArgumentError, "environment must be sandbox or production")
+  end
+
+  it "rejects malformed credential types and client addresses" do
+    expect { described_class.new(api_user: :user, api_key: "key", client_ip: "192.0.2.1") }
+      .to raise_error(ArgumentError, "api_user must be a string")
+    expect { described_class.new(api_user: " user ", api_key: "key", client_ip: "192.0.2.1") }
+      .to raise_error(ArgumentError, "api_user must not contain surrounding whitespace")
+    expect { described_class.new(api_user: "user", api_key: "key", client_ip: "not-an-ip") }
+      .to raise_error(ArgumentError, "client_ip must be an IPv4 address")
   end
 
   it "creates a domains resource" do

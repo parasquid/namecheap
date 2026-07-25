@@ -129,7 +129,7 @@ RSpec.describe "Namecheap v2 parity resources" do
       :post,
       "namecheap.users.create",
       profile_params.merge("NewUserName" => "new-user", "NewUserPassword" => "new-password", "AcceptTerms" => 1)
-    ) { resource.create(user_name: "new-user", password: "new-password", profile: profile, accept_terms: 1) }
+    ) { resource.create(user_name: "new-user", password: "new-password", profile: profile, accept_terms: true) }
     verify(:post, "namecheap.users.update", profile_params) { resource.update(profile: profile) }
     verify(:post, "namecheap.users.changePassword", {"NewPassword" => "new", "OldPassword" => "old"}) do
       resource.change_password(new_password: "new", old_password: "old")
@@ -192,19 +192,14 @@ RSpec.describe "Namecheap v2 parity resources" do
     end
   end
 
-  it "never restores protected fields when UserName is omitted" do
-    verify(
-      :post,
-      "namecheap.users.resetPassword",
-      {"FindBy" => "USERNAME", "FindByValue" => "new-user"},
-      include_user_name: false
-    ) do
+  it "rejects protected fields when UserName is omitted" do
+    expect do
       client.users.reset_password(
         find_by: "USERNAME",
         find_by_value: "new-user",
         params: {UserName: "override", ApiKey: "override", Command: "override"}
       )
-    end
+    end.to raise_error(ArgumentError, "params cannot include protected parameter UserName")
   end
 
   def profile_params

@@ -41,6 +41,7 @@ module Namecheap
         product_name: nil,
         params: {}
       )
+        required_string!(:product_type, product_type)
         command = "namecheap.users.getPricing"
         params = params
           .merge(
@@ -61,13 +62,16 @@ module Namecheap
       end
 
       def create(user_name:, password:, profile:, accept_terms:, params: {})
+        required_string!(:user_name, user_name)
+        required_string!(:password, password)
+        boolean!(:accept_terms, accept_terms)
         command = "namecheap.users.create"
         params = params
           .merge(profile_params(profile))
           .merge(
             "NewUserName" => user_name,
             "NewUserPassword" => password,
-            "AcceptTerms" => accept_terms
+            "AcceptTerms" => accept_terms ? 1 : 0
           )
         build_and_post(command, params)
       end
@@ -79,21 +83,27 @@ module Namecheap
       end
 
       def change_password(new_password:, old_password: nil, reset_code: nil, params: {})
+        required_string!(:new_password, new_password)
         modes = [old_password, reset_code].count { |value| !blank?(value) }
         raise ArgumentError, "provide exactly one of old_password or reset_code" unless modes == 1
 
         command = "namecheap.users.changePassword"
         params = params.merge("NewPassword" => new_password)
         if reset_code
+          required_string!(:reset_code, reset_code)
           params = params.merge("ResetCode" => reset_code)
           build_and_post(command, params, include_user_name: false)
         else
+          required_string!(:old_password, old_password)
           params = params.merge("OldPassword" => old_password)
           build_and_post(command, params)
         end
       end
 
       def create_add_funds_request(user_name:, payment_type:, amount:, return_url:, params: {})
+        required_string!(:user_name, user_name)
+        required_string!(:payment_type, payment_type)
+        required_string!(:return_url, return_url)
         command = "namecheap.users.createaddfundsrequest"
         params = params.merge(
           "Username" => user_name,
@@ -105,18 +115,22 @@ module Namecheap
       end
 
       def get_add_funds_status(token_id:, params: {})
+        required_string!(:token_id, token_id)
         command = "namecheap.users.getAddFundsStatus"
         params = params.merge("TokenId" => token_id)
         build_and_get(command, params)
       end
 
       def login(password:, params: {})
+        required_string!(:password, password)
         command = "namecheap.users.login"
         params = params.merge("Password" => password)
         build_and_post(command, params)
       end
 
       def reset_password(find_by:, find_by_value:, params: {})
+        required_string!(:find_by, find_by)
+        required_string!(:find_by_value, find_by_value)
         command = "namecheap.users.resetPassword"
         params = params.merge("FindBy" => find_by, "FindByValue" => find_by_value)
         build_and_post(command, params, include_user_name: false)

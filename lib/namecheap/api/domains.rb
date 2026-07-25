@@ -51,6 +51,8 @@ module Namecheap
         eap_fee: nil,
         params: {}
       )
+        required_string!(:domain_name, domain_name)
+        positive_integer!(:years, years)
         command = "namecheap.domains.create"
         params = params
           .merge(contact_params("Registrant", registrant))
@@ -84,6 +86,7 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains/get-contacts/
       def get_contacts(domain_name:, params: {})
+        required_string!(:domain_name, domain_name)
         command = "namecheap.domains.getContacts"
         params = params.merge("DomainName" => domain_name)
         build_and_get(command, params)
@@ -97,6 +100,7 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains/set-contacts/
       def set_contacts(domain_name:, registrant:, tech:, admin:, aux_billing:, params: {})
+        required_string!(:domain_name, domain_name)
         command = "namecheap.domains.setContacts"
         params = params
           .merge(contact_params("Registrant", registrant))
@@ -119,6 +123,8 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains/reactivate/
       def reactivate(domain_name:, years_to_add: nil, premium_price: nil, params: {})
+        required_string!(:domain_name, domain_name)
+        positive_integer!(:years_to_add, years_to_add) unless years_to_add.nil?
         command = "namecheap.domains.reactivate"
         params = params
           .merge(optional_params("YearsToAdd" => years_to_add, "PremiumPrice" => premium_price))
@@ -128,6 +134,8 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains/renew/
       def renew(domain_name:, years:, premium_price: nil, params: {})
+        required_string!(:domain_name, domain_name)
+        positive_integer!(:years, years)
         command = "namecheap.domains.renew"
         params = params
           .merge(optional_params("PremiumPrice" => premium_price))
@@ -137,6 +145,7 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains/get-registrar-lock/
       def get_registrar_lock(domain_name:, params: {})
+        required_string!(:domain_name, domain_name)
         command = "namecheap.domains.getRegistrarLock"
         params = params.merge("DomainName" => domain_name)
         build_and_get(command, params)
@@ -144,6 +153,7 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains/set-registrar-lock/
       def set_registrar_lock(domain_name:, params: {})
+        required_string!(:domain_name, domain_name)
         command = "namecheap.domains.setRegistrarLock"
         params = params.merge("DomainName" => domain_name)
         build_and_get(command, params)
@@ -151,6 +161,8 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains/get-info/
       def get_info(domain_name:, host_name: nil, params: {})
+        required_string!(:domain_name, domain_name)
+        required_string!(:host_name, host_name) unless host_name.nil?
         command = "namecheap.domains.getInfo"
         params = params
           .merge(optional_params("HostName" => host_name))
@@ -200,7 +212,8 @@ module Namecheap
           raise ArgumentError, "#{name} must be a string or array"
         end
 
-        values = values.map { |item| item.to_s.strip }.reject(&:empty?)
+        values.each { |item| required_string!(name, item) }
+        values = values.map(&:strip).reject(&:empty?)
         raise ArgumentError, "#{name} must contain at least one value" if values.empty?
 
         values

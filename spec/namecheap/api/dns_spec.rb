@@ -117,7 +117,7 @@ RSpec.describe Namecheap::API::Dns do
         {host_name: "@", record_type: "A", address: "192.0.2.10", ttl: 1800},
         {host_name: "@", record_type: "MX", address: "mail.example.net", mx_pref: 10}
       ],
-      params: {SLD: "override", ApiKey: "override"}
+      params: {SLD: "override"}
     )
 
     expect(response.data).to eq(value: "hosts")

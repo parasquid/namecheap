@@ -80,7 +80,7 @@ RSpec.describe Namecheap::API::Domains do
       tech: contact,
       admin: contact,
       aux_billing: contact,
-      params: {PromotionCode: "SAVE", DomainName: "override", ApiKey: "override"}
+      params: {PromotionCode: "SAVE", DomainName: "override"}
     )
 
     expect(response.data).to eq(value: "created")

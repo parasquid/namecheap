@@ -34,6 +34,8 @@ module Namecheap
       ].freeze
 
       def create(address_name:, address:, default: false, params: {})
+        required_string!(:address_name, address_name)
+        boolean!(:default, default)
         command = "namecheap.users.address.create"
         params = params
           .merge(address_params(address))
@@ -42,11 +44,13 @@ module Namecheap
       end
 
       def delete(address_id:, params: {})
+        positive_integer!(:address_id, address_id)
         command = "namecheap.users.address.delete"
         build_and_post(command, params.merge("AddressId" => address_id))
       end
 
       def get_info(address_id:, params: {})
+        positive_integer!(:address_id, address_id)
         command = "namecheap.users.address.getInfo"
         build_and_get(command, params.merge("AddressId" => address_id))
       end
@@ -57,11 +61,15 @@ module Namecheap
       end
 
       def set_default(address_id:, params: {})
+        positive_integer!(:address_id, address_id)
         command = "namecheap.users.address.setDefault"
         build_and_post(command, params.merge("AddressId" => address_id))
       end
 
       def update(address_id:, address_name:, address:, default: nil, params: {})
+        positive_integer!(:address_id, address_id)
+        required_string!(:address_name, address_name)
+        boolean!(:default, default) unless default.nil?
         command = "namecheap.users.address.update"
         params = params
           .merge(address_params(address))
@@ -86,8 +94,8 @@ module Namecheap
       end
 
       def boolean_number(value)
-        return 1 if value == true || value == 1 || value.to_s == "1"
-        return 0 if value == false || value == 0 || value.to_s == "0"
+        return 1 if value == true
+        return 0 if value == false
 
         raise ArgumentError, "default must be true or false"
       end

@@ -1,11 +1,11 @@
 # Changelog
 
-## 2.0.0.pre (unreleased)
+## 2.0.0.pre1 (unreleased)
 
 - Require Ruby 3.3 or newer and add CI for Ruby 3.3, 3.4, and 4.0.
 - Require a Namecheap-whitelisted client IP when constructing a client.
-- Validate client configuration and protect authentication parameters from overrides.
-- Make unfinished API resources fail explicitly with `NotImplementedError`.
+- Make client configuration private and immutable, validate its public inputs,
+  and reject protected authentication parameters before requests.
 - Complete the 0.3.1 domain and DNS command coverage using explicit v2 resource methods.
 - Add structured contact, email-forwarding, and DNS-record payloads with request validation.
 - Use form-encoded POST requests for domain creation and DNS host replacement.
@@ -19,4 +19,7 @@
 - Add verified, signed-tag release automation using RubyGems trusted publishing.
 - Promote v2 development to `main` and preserve the old 0.3 line as `legacy/0.3`.
 
-This prerelease remains incomplete and has not been published.
+This prerelease has not been published. Open GitHub
+[issues](https://github.com/parasquid/namecheap/issues) are the live roadmap.
+The planned 0.3-to-v2 migration guide is tracked in
+[issue #18](https://github.com/parasquid/namecheap/issues/18).

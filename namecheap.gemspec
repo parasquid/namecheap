@@ -26,6 +26,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "addressable", ">= 2.8", "< 3"
+  spec.add_dependency "bigdecimal", ">= 3.1", "< 5"
   spec.add_dependency "faraday", ">= 2.9", "< 3"
   spec.add_dependency "rexml", ">= 3.4", "< 4"
   spec.add_dependency "thor", ">= 1.5", "< 2"

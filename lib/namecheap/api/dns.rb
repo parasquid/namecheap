@@ -18,6 +18,8 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains-dns/set-default/
       def set_default(sld:, tld:, params: {})
+        required_string!(:sld, sld)
+        required_string!(:tld, tld)
         command = "namecheap.domains.dns.setDefault"
         params = params.merge("SLD" => sld, "TLD" => tld)
         build_and_get(command, params)
@@ -25,6 +27,8 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains-dns/set-custom/
       def set_custom(sld:, tld:, nameservers:, params: {})
+        required_string!(:sld, sld)
+        required_string!(:tld, tld)
         command = "namecheap.domains.dns.setCustom"
         nameservers = list_values(nameservers, name: "nameservers")
         params = params.merge("SLD" => sld, "TLD" => tld, "Nameservers" => nameservers.join(","))
@@ -33,6 +37,8 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains-dns/get-list/
       def get_list(sld:, tld:, params: {})
+        required_string!(:sld, sld)
+        required_string!(:tld, tld)
         command = "namecheap.domains.dns.getList"
         params = params.merge(
           "SLD" => sld,
@@ -43,6 +49,8 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains-dns/get-hosts/
       def get_hosts(sld:, tld:, params: {})
+        required_string!(:sld, sld)
+        required_string!(:tld, tld)
         command = "namecheap.domains.dns.getHosts"
         params = params.merge("SLD" => sld, "TLD" => tld)
         build_and_get(command, params)
@@ -50,6 +58,7 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains-dns/get-email-forwarding/
       def get_email_forwarding(domain_name:, params: {})
+        required_string!(:domain_name, domain_name)
         command = "namecheap.domains.dns.getEmailForwarding"
         params = params.merge("DomainName" => domain_name)
         build_and_get(command, params)
@@ -57,6 +66,7 @@ module Namecheap
 
       # https://www.namecheap.com/support/api/methods/domains-dns/set-email-forwarding/
       def set_email_forwarding(domain_name:, forwardings:, params: {})
+        required_string!(:domain_name, domain_name)
         command = "namecheap.domains.dns.setEmailForwarding"
         params = params
           .merge(indexed_params(forwardings, fields: FORWARDING_FIELDS, required: FORWARDING_FIELDS.keys, name: "forwardings"))
@@ -67,7 +77,9 @@ module Namecheap
       # Replaces the complete host-record set for the domain.
       # https://www.namecheap.com/support/api/methods/domains-dns/set-hosts/
       def set_hosts(sld:, tld:, email_type:, records:, params: {})
-        raise ArgumentError, "email_type must be provided" if blank?(email_type)
+        required_string!(:sld, sld)
+        required_string!(:tld, tld)
+        required_string!(:email_type, email_type)
 
         command = "namecheap.domains.dns.setHosts"
         record_params = indexed_params(records, fields: RECORD_FIELDS, required: REQUIRED_RECORD_FIELDS, name: "records") do |record, index|
@@ -115,7 +127,8 @@ module Namecheap
           raise ArgumentError, "#{name} must be a string or array"
         end
 
-        values = values.map { |item| item.to_s.strip }.reject(&:empty?)
+        values.each { |item| required_string!(name, item) }
+        values = values.map(&:strip).reject(&:empty?)
         raise ArgumentError, "#{name} must contain at least one value" if values.empty?
 
         values

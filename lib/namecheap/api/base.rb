@@ -1,14 +1,16 @@
 require "faraday"
 require "addressable"
+require "ipaddr"
 require "namecheap/version"
 require "namecheap/api/response"
+require "namecheap/api/key_normalizer"
 
 module Namecheap
   module API
     class Base
       SANDBOX = "https://api.sandbox.namecheap.com/xml.response"
       PRODUCTION = "https://api.namecheap.com/xml.response"
-      PROTECTED_FIELDS = %w[ApiUser ApiKey UserName ClientIp Command].freeze
+      PROTECTED_FIELDS = %w[api_user api_key user_name client_ip command].freeze
 
       def initialize(config)
         @config = config
@@ -28,7 +30,16 @@ module Namecheap
       end
 
       def request_params(command, params, include_user_name: true)
-        caller_params = params.transform_keys(&:to_s).except(*PROTECTED_FIELDS)
+        raise ArgumentError, "params must be a hash" unless params.respond_to?(:each_pair)
+
+        caller_params = params.each_pair.to_h do |key, value|
+          normalized = KeyNormalizer.snake(key)
+          if PROTECTED_FIELDS.include?(normalized)
+            raise ArgumentError, "params cannot include protected parameter #{key}"
+          end
+
+          [key.to_s, value]
+        end
         credentials = include_user_name ? @query : @query.except("UserName")
         caller_params.merge(credentials).merge("Command" => command)
       end
@@ -74,6 +85,36 @@ module Namecheap
         end
 
         Response.parse(response.body, command: command)
+      end
+
+      def required_string!(name, value)
+        raise ArgumentError, "#{name} must be provided" if value.nil? || value == ""
+        raise ArgumentError, "#{name} must be a string" unless value.is_a?(String)
+        raise ArgumentError, "#{name} must not contain surrounding whitespace" unless value == value.strip
+
+        value
+      end
+
+      def positive_integer!(name, value)
+        raise ArgumentError, "#{name} must be a positive integer" unless value.is_a?(Integer) && value.positive?
+
+        value
+      end
+
+      def boolean!(name, value)
+        raise ArgumentError, "#{name} must be true or false" unless value == true || value == false
+
+        value
+      end
+
+      def ipv4!(name, value)
+        required_string!(name, value)
+        address = IPAddr.new(value)
+        raise ArgumentError, "#{name} must be an IPv4 address" unless address.ipv4?
+
+        value
+      rescue IPAddr::InvalidAddressError
+        raise ArgumentError, "#{name} must be an IPv4 address"
       end
     end
   end

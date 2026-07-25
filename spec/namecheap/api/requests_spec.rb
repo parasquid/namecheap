@@ -45,17 +45,14 @@ RSpec.describe "Namecheap v2 requests" do
     expect(request).to have_been_requested.once
   end
 
-  it "protects credentials and command from caller overrides" do
-    request = stub_request(:get, Namecheap::API::Base::SANDBOX)
-      .with(query: credentials.merge("Command" => "namecheap.domains.getList"))
-      .to_return(body: response_xml("protected"))
+  it "rejects normalized protected parameters before a request" do
+    %w[ApiKey APIKey apiKey api_key api-key].each do |key|
+      expect do
+        build_client.domains.get_list(params: {key => "override"})
+      end.to raise_error(ArgumentError, "params cannot include protected parameter #{key}")
+    end
 
-    response = build_client.domains.get_list(
-      params: {ApiKey: "override", ClientIp: "203.0.113.1", Command: "namecheap.users.getBalances"}
-    )
-
-    expect(response.data).to eq(value: "protected")
-    expect(request).to have_been_requested.once
+    expect(a_request(:any, /namecheap/)).not_to have_been_made
   end
 
   it "gets domain contacts" do

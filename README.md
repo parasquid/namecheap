@@ -1,6 +1,6 @@
 # Namecheap
 
-The `main` branch contains the experimental instance-based rewrite of the `namecheap` gem. Version `2.0.0.pre` covers the current official API catalog and remains unreleased. It requires Ruby 3.3 or newer.
+The `main` branch contains the experimental instance-based rewrite of the `namecheap` gem. Version `2.0.0.pre1` covers the current official API catalog and remains unreleased. It requires Ruby 3.3 or newer.
 
 The former 0.3.x implementation is preserved without planned maintenance on the
 `legacy/0.3` branch.
@@ -34,6 +34,10 @@ client = Namecheap::API::Client.new(
 
 `user_name` defaults to `api_user`, and `environment` defaults to `sandbox`. The API user, key, username, and [whitelisted client IP](https://www.namecheap.com/support/api/global-parameters/) must be non-empty. The environment must be either `sandbox` or `production`.
 
+Configuration values must be strings without surrounding whitespace, and
+`client_ip` must be a valid IPv4 address. The client exposes only its
+nonsecret `environment`; credentials remain private after construction.
+
 Avoid committing credentials to source control. Test against Namecheap's sandbox before using production.
 
 ## Command-line interface
@@ -50,10 +54,15 @@ bundle exec namecheap help --json
 Use `.env.staging` directly for sandbox commands:
 
 ```shell
+cp .env.staging.example .env.staging
+chmod 600 .env.staging
 bundle exec namecheap domains list --env-file .env.staging
 bundle exec namecheap domains check example.com --env-file .env.staging --json
 bundle exec namecheap dns records list example.com --env-file .env.staging
 ```
+
+The CLI never loads `.env` or `.env.staging` automatically. Credential files
+must always be selected explicitly with `--env-file`.
 
 Alternatively, save named profiles under the XDG config directory. API keys are prompted without echo and the config file is written with mode `0600`:
 
@@ -73,7 +82,9 @@ bundle exec namecheap help dns records apply --example zone --format json
 
 ## Sandbox smoke tests
 
-Copy `.env.example` to the ignored `.env.staging` file and fill it with sandbox-only credentials. The smoke script reads this file directly and refuses production environments.
+Copy `.env.staging.example` to the ignored `.env.staging` file, set its mode to
+`0600`, and fill it with sandbox-only credentials. The smoke script reads this
+file directly and refuses production environments.
 
 Run authentication and read-only API checks:
 
@@ -242,8 +253,8 @@ release. To release a finalized version:
 3. Create and push an annotated signed tag that exactly matches the version:
 
    ```shell
-   git tag -s v2.0.0.pre -m "Release v2.0.0.pre"
-   git push origin v2.0.0.pre
+   git tag -s v2.0.0.pre1 -m "Release v2.0.0.pre1"
+   git push origin v2.0.0.pre1
    ```
 
 GitHub must recognize the tag signature as verified. The release workflow then
