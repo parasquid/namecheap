@@ -245,6 +245,11 @@ re-runs the tests and style checks, publishes through RubyGems trusted
 publishing, and creates a matching GitHub Release. Prerelease gem versions
 produce prerelease GitHub Releases.
 
+Before the first automated release, a `namecheap` gem owner must register the
+GitHub Actions trusted publisher on RubyGems.org with owner `parasquid`,
+repository `namecheap`, workflow `release.yml`, and environment `release`. This
+is a one-time account setting; the repository does not store a RubyGems API key.
+
 ## License
 
 Copyright 2011 Tristan V. Gomez. This project is available under the GNU Lesser General Public License, version 3 or any later version. See [COPYING](COPYING).
