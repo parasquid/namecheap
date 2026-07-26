@@ -12,8 +12,17 @@ module Namecheap
       PRODUCTION = "https://api.namecheap.com/xml.response"
       PROTECTED_FIELDS = %w[api_user api_key user_name client_ip command].freeze
 
-      def initialize(config)
+      def self.build_connection(open_timeout:, read_timeout:)
+        Faraday.new do |connection|
+          connection.options.open_timeout = open_timeout
+          connection.options.timeout = read_timeout
+          connection.request :url_encoded
+        end
+      end
+
+      def initialize(config, connection:)
         @config = config
+        @connection = connection
         @environment = config[:environment]
         @query = {
           "ApiUser" => config[:api_user],
@@ -62,14 +71,14 @@ module Namecheap
       end
 
       def get(url, command)
-        response = Faraday.get(url)
+        response = @connection.get(url)
         response_for(response, command)
       rescue Faraday::Error => error
         raise TransportError.new("Namecheap request failed: #{error.class}", command: command)
       end
 
       def post(url, params, command)
-        response = Faraday.post(url, params)
+        response = @connection.post(url, params)
         response_for(response, command)
       rescue Faraday::Error => error
         raise TransportError.new("Namecheap request failed: #{error.class}", command: command)
