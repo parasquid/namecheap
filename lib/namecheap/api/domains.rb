@@ -171,15 +171,15 @@ module Namecheap
       end
 
       def dns
-        Dns.new(@config)
+        Dns.new(@config, connection: @connection)
       end
 
       def nameservers
-        Nameservers.new(@config)
+        Nameservers.new(@config, connection: @connection)
       end
 
       def transfers
-        Transfers.new(@config)
+        Transfers.new(@config, connection: @connection)
       end
 
       private

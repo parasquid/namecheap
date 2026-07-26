@@ -65,12 +65,19 @@ prefixes. Issue numbers are encouraged for traceability, not required. Use this
 sequence when choosing a branch name:
 
 1. Check whether the task has a parent issue.
-2. When a parent issue exists, encourage
+2. Before making file changes for work tied to a GitHub issue, check the current
+   branch and existing local branches. If the current branch is unrelated but a
+   matching issue branch already exists, treat the work as a possible
+   continuation and switch to that branch. If no matching branch exists, ask
+   the user whether to create an issue branch before editing.
+3. When a parent issue exists, encourage
    `<issue-number>-<short-description>`, such as `19-request-timeouts`.
-3. When no parent issue exists, recommend creating one for traceability.
-4. If the user prefers not to create an issue, respect that decision and use a
+4. When no parent issue exists, recommend creating one for traceability.
+5. If the user prefers not to create an issue, respect that decision and use a
    concise descriptive name such as `refresh-readme-examples`.
-5. Respect an explicit branch name chosen by the user.
+6. Respect an explicit branch name chosen by the user.
+7. After a topic branch has been merged, offer to delete both its local and
+   remote copies. Do not delete either branch without the user's confirmation.
 
 ## Security & Releases
 

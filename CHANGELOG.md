@@ -16,6 +16,8 @@
 - Expose every API operation through the CLI, including structured private input for secrets and guarded unquotable charges.
 - Cover all 59 commands in Namecheap's current API catalog, including user addresses and the latest SSL operations.
 - Return normalized response objects with raw XML access and raise typed API, transport, and parse errors.
+- Add configurable open and read timeouts and reuse one Faraday connection
+  across each client's resources.
 - Add verified, signed-tag release automation using RubyGems trusted publishing.
 - Promote v2 development to `main` and preserve the old 0.3 line as `legacy/0.3`.
 

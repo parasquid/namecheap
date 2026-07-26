@@ -28,11 +28,20 @@ client = Namecheap::API::Client.new(
   api_key: ENV.fetch("NAMECHEAP_API_KEY"),
   user_name: ENV.fetch("NAMECHEAP_USERNAME"),
   client_ip: ENV.fetch("NAMECHEAP_CLIENT_IP"),
-  environment: "sandbox"
+  environment: "sandbox",
+  open_timeout: 5,
+  read_timeout: 30
 )
 ```
 
-`user_name` defaults to `api_user`, and `environment` defaults to `sandbox`. The API user, key, username, and [whitelisted client IP](https://www.namecheap.com/support/api/global-parameters/) must be non-empty. The environment must be either `sandbox` or `production`.
+`user_name` defaults to `api_user`, and `environment` defaults to `sandbox`.
+Connections default to a 5-second open timeout and a 30-second read timeout;
+both accept custom positive finite numbers. One connection is reused by all
+resources belonging to the client.
+
+The API user, key, username, and
+[whitelisted client IP](https://www.namecheap.com/support/api/global-parameters/)
+must be non-empty. The environment must be either `sandbox` or `production`.
 
 Configuration values must be strings without surrounding whitespace, and
 `client_ip` must be a valid IPv4 address. The client exposes only its

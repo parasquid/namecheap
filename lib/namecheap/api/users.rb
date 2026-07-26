@@ -137,7 +137,7 @@ module Namecheap
       end
 
       def addresses
-        Addresses.new(@config)
+        Addresses.new(@config, connection: @connection)
       end
 
       private

@@ -73,4 +73,22 @@ RSpec.describe Namecheap::API::Response do
         expect(error.message).not_to include("ApiKey")
       }
   end
+
+  it "raises a transport error for timeout failures" do
+    client = Namecheap::API::Client.new(
+      api_user: "api-user",
+      api_key: "api-key",
+      user_name: "account-user",
+      client_ip: "192.0.2.1"
+    )
+    stub_request(:get, Namecheap::API::Base::SANDBOX)
+      .with(query: hash_including("Command" => "namecheap.domains.getList"))
+      .to_raise(Faraday::TimeoutError.new("execution expired"))
+
+    expect { client.domains.get_list }
+      .to raise_error(Namecheap::API::TransportError, "Namecheap request failed: Faraday::TimeoutError") { |error|
+        expect(error.command).to eq("namecheap.domains.getList")
+        expect(error.message).not_to include("ApiKey")
+      }
+  end
 end
