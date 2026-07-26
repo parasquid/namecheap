@@ -60,6 +60,18 @@ document.
 
 Use short, imperative subjects such as `Modernize v2 prototype`. Keep commits focused. Pull requests should explain behavior, incomplete API areas, and validation; link issues when available.
 
+Name branches using lowercase kebab case. Do not add type, username, or agent
+prefixes. Issue numbers are encouraged for traceability, not required. Use this
+sequence when choosing a branch name:
+
+1. Check whether the task has a parent issue.
+2. When a parent issue exists, encourage
+   `<issue-number>-<short-description>`, such as `19-request-timeouts`.
+3. When no parent issue exists, recommend creating one for traceability.
+4. If the user prefers not to create an issue, respect that decision and use a
+   concise descriptive name such as `refresh-readme-examples`.
+5. Respect an explicit branch name chosen by the user.
+
 ## Security & Releases
 
 Never commit API keys, usernames, client IP configuration, or environment files containing credentials. Manual staging tests must load sandbox credentials from `.env.staging`; never use production credentials for them. Version changes, branch pushes, and gem builds do not constitute a release. A release requires a finalized changelog entry and an annotated signed `vVERSION` tag from `main` that GitHub reports as verified. Pushing that tag runs the release workflow, which validates the tag and publishes through RubyGems trusted publishing without a long-lived API key.
