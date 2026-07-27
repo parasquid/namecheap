@@ -105,6 +105,159 @@ RSpec.describe Namecheap::CLI do
     expect(stdout).not_to include("api-key")
   end
 
+  it "redacts complete profiles in every output format" do
+    config = File.join(@directory, "config.yml")
+    File.write(
+      config,
+      <<~YAML
+        version: 1
+        profiles:
+          sandbox:
+            api_user: api-user
+            api_key: profile-api-key-value
+            password_policy: visible-policy
+            environment: sandbox
+      YAML
+    )
+
+    [[], ["--json"], ["--raw"]].each do |format|
+      code, stdout, stderr = run_cli("config", "profiles", "show", "sandbox", "--config", config, *format)
+
+      expect(code).to eq(0), stderr
+      expect(stdout).to include("[redacted]", "visible-policy")
+      expect(stdout).not_to include("profile-api-key-value")
+    end
+  end
+
+  it "returns safe diagnostics for malformed sensitive and credential inputs" do
+    password_file = File.join(@directory, "password.json")
+    File.write(password_file, %({"password": password-value-that-must-not-leak}))
+    File.chmod(0o600, password_file)
+
+    code, stdout, stderr = run_cli("users", "login", password_file, env: credentials)
+
+    expect(code).to eq(2)
+    expect(stdout).to be_empty
+    expect(stderr).to include("invalid password input", "expected valid JSON")
+    expect(stderr).not_to include("password-value-that-must-not-leak")
+
+    env_file = File.join(@directory, "credentials.env")
+    File.write(env_file, "NAMECHEAP_API_KEY credential-value-that-must-not-leak\n")
+
+    code, stdout, stderr = run_cli("domains", "check", "example.com", "--env-file", env_file)
+
+    expect(code).to eq(2)
+    expect(stdout).to be_empty
+    expect(stderr).to include("line 1 must be KEY=VALUE")
+    expect(stderr).not_to include("credential-value-that-must-not-leak")
+  end
+
+  it "never repeats transfer, reset, token, or authorization values from malformed documents" do
+    cases = [
+      [
+        "transfer.json",
+        %({"epp_code": epp-value-that-must-not-leak}),
+        ->(path) { ["domains", "transfers", "create", "example.com", "--input", path] }
+      ],
+      [
+        "password-change.json",
+        %({"new_password": "new", "reset_code": reset-value-that-must-not-leak}),
+        ->(path) { ["users", "password", "change", path] }
+      ],
+      [
+        "token.json",
+        %({"token": token-value-that-must-not-leak}),
+        ->(path) { ["domains", "check", "example.com", "--params", path] }
+      ],
+      [
+        "authorization.json",
+        %({"authorization_code": authorization-value-that-must-not-leak}),
+        ->(path) { ["domains", "check", "example.com", "--params", path] }
+      ]
+    ]
+
+    cases.each do |name, content, arguments|
+      path = File.join(@directory, name)
+      File.write(path, content)
+      File.chmod(0o600, path)
+
+      code, stdout, stderr = run_cli(*arguments.call(path), env: credentials)
+
+      expect(code).to eq(2)
+      expect(stdout).to be_empty
+      expect(stderr).to include("expected valid JSON")
+      expect(stderr).not_to include("value-that-must-not-leak")
+    end
+  end
+
+  it "returns a safe diagnostic for malformed configuration" do
+    config = File.join(@directory, "config.yml")
+    File.write(config, "profiles: [api-key-value-that-must-not-leak\n")
+
+    code, stdout, stderr = run_cli("config", "profiles", "list", "--config", config)
+
+    expect(code).to eq(2)
+    expect(stdout).to be_empty
+    expect(stderr).to include("expected valid YAML")
+    expect(stderr).not_to include("api-key-value-that-must-not-leak")
+  end
+
+  it "redacts returned tokens and copies embedded in URLs in every output format" do
+    response_xml = <<~XML
+      <ApiResponse Status="OK">
+        <CommandResponse>
+          <CreateAddFundsRequestResult
+            TokenID="returned-token-value-123"
+            RedirectURL="https://example.test/pay?tokenid=returned-token-value-123" />
+        </CommandResponse>
+      </ApiResponse>
+    XML
+    stub_request(:post, Namecheap::API::Base::SANDBOX).to_return(body: response_xml)
+
+    [[], ["--json"], ["--raw"]].each do |format|
+      code, stdout, stderr = run_cli(
+        "users", "funds", "request", "reseller-user",
+        "--amount", "40",
+        "--return-url", "https://example.test/return",
+        "--yes",
+        *format,
+        env: credentials
+      )
+
+      expect(code).to eq(0), stderr
+      expect(stdout).to include("[redacted]")
+      expect(stdout).not_to include("returned-token-value-123")
+    end
+  end
+
+  it "scrubs positional tokens from API errors" do
+    token = "submitted-token-value-123"
+    stub_request(:get, Namecheap::API::Base::SANDBOX)
+      .with(query: hash_including("Command" => "namecheap.users.getAddFundsStatus", "TokenId" => token))
+      .to_return(
+        body: <<~XML
+          <ApiResponse Status="ERROR">
+            <Errors><Error Number="2012342">TokenID #{token} did not match</Error></Errors>
+            <CommandResponse />
+          </ApiResponse>
+        XML
+      )
+
+    code, stdout, stderr = run_cli("users", "funds", "status", token, env: credentials)
+
+    expect(code).to eq(1)
+    expect(stdout).to be_empty
+    expect(stderr).to include("TokenID [redacted] did not match")
+    expect(stderr).not_to include(token)
+  end
+
+  it "keeps trusted placeholders in generated examples" do
+    code, stdout, stderr = run_cli("help", "users", "login", "--example", "password")
+
+    expect(code).to eq(0), stderr
+    expect(stdout).to include("replace-with-password")
+  end
+
   it "quotes exact domain pricing without making a purchase" do
     stub_request(:get, Namecheap::API::Base::SANDBOX)
       .with(query: hash_including("Command" => "namecheap.users.getPricing", "ActionName" => "REGISTER", "ProductName" => "COM"))

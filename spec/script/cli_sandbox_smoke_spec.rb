@@ -20,7 +20,11 @@ RSpec.describe CliSandboxSmoke do
         def run(arguments, stdout:, **)
           @calls ||= []
           @calls << arguments
-          stdout.puts(JSON.generate(response(arguments)))
+          if arguments.include?("--raw")
+            stdout.puts("<ApiResponse Status=\"OK\" />")
+          else
+            stdout.puts(JSON.generate(response(arguments)))
+          end
           0
         end
 
@@ -62,8 +66,26 @@ RSpec.describe CliSandboxSmoke do
       array_including("users", "addresses", "list"),
       array_including("domain-privacy", "list"),
       array_including("dns", "records", "list"),
-      array_including("dns", "records", "add", "--dry-run")
+      array_including("dns", "records", "add", "--dry-run"),
+      array_including("domains", "check", "--raw")
     )
+  end
+
+  it "fails without repeating a configured API key when CLI output leaks it" do
+    environment_file.open
+    environment_file.truncate(0)
+    environment_file.write("NAMECHEAP_API_KEY=smoke-api-key-value\n")
+    environment_file.close
+    leaking_cli = Class.new do
+      def self.run(_arguments, stdout:, **)
+        stdout.puts("smoke-api-key-value")
+        0
+      end
+    end
+
+    expect do
+      described_class.new(env_file: environment_file.path, output: output, cli: leaking_cli).run
+    end.to raise_error(RuntimeError, "CLI output contained a configured sensitive value")
   end
 
   it "refuses a production environment file" do

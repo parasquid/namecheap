@@ -1,21 +1,29 @@
 require "json"
+require "namecheap/cli/sensitive_data"
 
 module Namecheap
   module CLI
     class Renderer
-      def initialize(io:, format:)
+      def initialize(io:, format:, sensitive_data: SensitiveData.new)
         @io = io
         @format = format
+        @sensitive_data = sensitive_data
       end
 
-      def render(data, meta: {})
+      def render(data, meta: {}, raw_xml: false)
+        if raw_xml
+          @io.puts(@sensitive_data.redact_xml(data))
+          return
+        end
+
+        output = @sensitive_data.redact("data" => data, "meta" => meta)
         case @format
         when :raw
-          @io.puts(data)
+          @io.puts(output.fetch("data"))
         when :json
-          @io.puts(JSON.pretty_generate("data" => data, "meta" => meta))
+          @io.puts(JSON.pretty_generate(output))
         else
-          human(data)
+          human(output.fetch("data"))
         end
       end
 

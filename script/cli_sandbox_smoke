@@ -69,6 +69,9 @@ class CliSandboxSmoke
     check = invoke("domains", "check", check_domain, "--json")
     assert("domains check") { find_value(check["data"], "domain") == check_domain }
 
+    raw_check = invoke_raw("domains", "check", check_domain, "--raw")
+    assert("domains check raw output") { raw_check.include?("<ApiResponse") }
+
     price = invoke("domains", "price", check_domain, "--json")
     assert("domains price") do
       price.dig("data", "currency").to_s != "" && price.dig("data", "price").to_s != ""
@@ -103,6 +106,7 @@ class CliSandboxSmoke
 
   def validate_environment!
     values = Namecheap::CLI::EnvFile.load(@env_file)
+    @sensitive_values = [values["NAMECHEAP_API_KEY"]].compact.reject(&:empty?)
     environment = values.fetch("NAMECHEAP_ENVIRONMENT", "sandbox")
     raise "CLI sandbox smoke refuses environment=#{environment.inspect}" unless environment == "sandbox"
   end
@@ -112,11 +116,29 @@ class CliSandboxSmoke
     stderr = StringIO.new
     arguments += ["--env-file", @env_file] if credentials
     code = @cli.run(arguments, stdout: stdout, stderr: stderr, stdin: StringIO.new, env: ENV)
+    assert_no_sensitive_output!(stdout.string, stderr.string)
     raise "#{arguments.take_while { |argument| !argument.start_with?("--") }.join(" ")} failed: #{stderr.string.strip}" unless code == 0
 
     JSON.parse(stdout.string)
   rescue JSON::ParserError => error
     raise "#{arguments.join(" ")} returned invalid JSON: #{error.message}"
+  end
+
+  def invoke_raw(*arguments)
+    stdout = StringIO.new
+    stderr = StringIO.new
+    arguments += ["--env-file", @env_file]
+    code = @cli.run(arguments, stdout: stdout, stderr: stderr, stdin: StringIO.new, env: ENV)
+    assert_no_sensitive_output!(stdout.string, stderr.string)
+    raise "#{arguments.take_while { |argument| !argument.start_with?("--") }.join(" ")} failed" unless code == 0
+
+    stdout.string
+  end
+
+  def assert_no_sensitive_output!(*streams)
+    return unless @sensitive_values.any? { |value| streams.any? { |stream| stream.include?(value) } }
+
+    raise "CLI output contained a configured sensitive value"
   end
 
   def assert(label)

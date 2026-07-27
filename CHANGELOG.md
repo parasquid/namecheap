@@ -14,6 +14,8 @@
 - Add an agent-discoverable CLI with XDG profiles, env-file configuration, human/JSON/raw output, guarded paid actions, and drift-safe DNS record workflows.
 - Reach current-adjusted 0.3.1 command parity with registered nameserver, transfer, SSL, user, and domain-privacy resources.
 - Expose every API operation through the CLI, including structured private input for secrets and guarded unquotable charges.
+- Redact API keys, passwords, transfer and reset codes, and tokens consistently
+  across CLI responses, raw XML, previews, profiles, and errors.
 - Cover all 59 commands in Namecheap's current API catalog, including user addresses and the latest SSL operations.
 - Return normalized response objects with raw XML access and raise typed API, transport, and parse errors.
 - Add configurable open and read timeouts and reuse one Faraday connection
