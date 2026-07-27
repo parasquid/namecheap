@@ -37,7 +37,8 @@ RSpec.describe Namecheap::CLI::Renderer do
   it "redacts structured raw output" do
     output = render(:raw, {"password" => "password-value", "password_policy" => "visible"})
 
-    expect(output).to include("\"password\"=>\"[redacted]\"", "\"password_policy\"=>\"visible\"")
+    expect(output).to match(/"password"\s*=>\s*"\[redacted\]"/)
+    expect(output).to match(/"password_policy"\s*=>\s*"visible"/)
     expect(output).not_to include("password-value")
   end
 
