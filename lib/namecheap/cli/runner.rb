@@ -9,6 +9,7 @@ require "namecheap/cli/config_store"
 require "namecheap/cli/env_file"
 require "namecheap/cli/error"
 require "namecheap/cli/renderer"
+require "namecheap/cli/sensitive_data"
 require "namecheap/cli/xml"
 
 module Namecheap
@@ -35,6 +36,7 @@ module Namecheap
         @stdin = stdin
         @env = env
         @shell = Thor::Shell::Basic.new
+        @sensitive_data = SensitiveData.new
       end
 
       def run(argv)
@@ -47,16 +49,19 @@ module Namecheap
         dispatch(command["path"], arguments)
         0
       rescue Error => error
-        @stderr.puts("Error: #{error.message}")
+        write_error(error)
         error.exit_code
       rescue Interrupt
         @stderr.puts("Interrupted")
         130
       rescue ArgumentError => error
-        @stderr.puts("Error: #{error.message}")
+        write_error(error)
         2
       rescue Namecheap::API::Error => error
-        @stderr.puts("Error: #{error.message}")
+        write_error(error)
+        1
+      rescue SensitiveData::UnsafeOutputError => error
+        write_error(error)
         1
       end
 
@@ -260,11 +265,12 @@ module Namecheap
         when "show"
           name = arguments.first || store.data["default_profile"] || raise(Error, "no default profile is selected")
           profile = store.profiles[name] || raise(Error, "profile not found: #{name}")
-          render(profile.merge("name" => name, "api_key" => profile["api_key"] ? "[redacted]" : nil))
+          render(profile.merge("name" => name))
         when "add"
           name = one_arg!(arguments)
           values = credentials_from_environment(@env)
           values["api_key"] ||= prompt_secret("API key")
+          @sensitive_data.register(values)
           %w[api_user api_key client_ip].each { |key| raise Error, "#{CREDENTIAL_ENV[key.to_sym]} must be set" if blank?(values[key]) }
           values["user_name"] ||= values["api_user"]
           values["environment"] ||= "sandbox"
@@ -494,7 +500,7 @@ module Namecheap
         domain = arguments.first
         document = load_document(arguments[1] || @options["--input"] || "-")
         contacts = contact_groups(document)
-        preview = {"operation" => "set contacts", "domain" => domain, "contacts" => redact(document)}
+        preview = {"operation" => "set contacts", "domain" => domain, "contacts" => document}
         return if dry_run!(preview)
 
         confirm!("Replace contacts for #{domain}?")
@@ -573,9 +579,9 @@ module Namecheap
         when "create"
           domain = one_arg!(arguments)
           input = if @options["--input"]
-            sensitive_document(@options["--input"], required: %w[epp_code])
+            sensitive_document(@options["--input"], required: %w[epp_code], context: "EPP code input")
           else
-            {"epp_code" => prompt_secret("EPP code")}
+            {"epp_code" => prompt_secret("EPP code")}.tap { |value| @sensitive_data.register(value) }
           end
           years = Integer(@options["--years"] || input["years"] || 1)
           _sld, tld = split_domain(domain)
@@ -808,8 +814,12 @@ module Namecheap
           require_args!(arguments, 0, exact: true)
           render_response(users.get_balances(params: api_params))
         when "create"
-          input = sensitive_document(input_path(arguments), required: %w[user_name password profile accept_terms])
-          mutate("create user", user_name: input["user_name"], profile: redact(input["profile"])) do
+          input = sensitive_document(
+            input_path(arguments),
+            required: %w[user_name password profile accept_terms],
+            context: "password input"
+          )
+          mutate("create user", user_name: input["user_name"], profile: input["profile"]) do
             users.create(
               user_name: input.fetch("user_name"),
               password: input.fetch("password"),
@@ -824,10 +834,18 @@ module Namecheap
           mutate("update user", profile: profile) { users.update(profile: profile, params: api_params) }
         when "login"
           path = optional_input_path(arguments)
-          input = path ? sensitive_document(path, required: %w[password]) : {"password" => prompt_secret("Password")}
+          input = if path
+            sensitive_document(path, required: %w[password], context: "password input")
+          else
+            {"password" => prompt_secret("Password")}.tap { |value| @sensitive_data.register(value) }
+          end
           render_response(users.login(password: input.fetch("password"), params: api_params))
         when "password change"
-          input = sensitive_document(input_path(arguments), required: %w[new_password])
+          input = sensitive_document(
+            input_path(arguments),
+            required: %w[new_password],
+            context: "password and reset code input"
+          )
           mutate("change user password") do
             users.change_password(
               new_password: input.fetch("new_password"),
@@ -856,7 +874,9 @@ module Namecheap
             )
           end
         when "funds status"
-          render_response(users.get_add_funds_status(token_id: one_arg!(arguments), params: api_params))
+          token_id = one_arg!(arguments)
+          @sensitive_data.register("token_id" => token_id)
+          render_response(users.get_add_funds_status(token_id: token_id, params: api_params))
         end
       end
 
@@ -1032,13 +1052,16 @@ module Namecheap
       end
 
       def render_response(body, meta = {})
-        value = @options["--raw"] ? body.raw_body : XML.parse(body)
         response_meta = meta.merge(
           "profile" => selected_profile,
           "environment" => resolved_config[:environment]
         )
         response_meta["paging"] = body.paging if body.paging
-        renderer.render(value, meta: response_meta)
+        if @options["--raw"]
+          renderer.render(body.raw_body, meta: response_meta, raw_xml: true)
+        else
+          renderer.render(XML.parse(body), meta: response_meta)
+        end
       end
 
       def render(data, meta: {})
@@ -1053,7 +1076,7 @@ module Namecheap
         else
           :human
         end
-        @renderer ||= Renderer.new(io: @stdout, format: format)
+        @renderer ||= Renderer.new(io: @stdout, format: format, sensitive_data: @sensitive_data)
       end
 
       def client
@@ -1066,6 +1089,9 @@ module Namecheap
           file_values = @options["--env-file"] ? EnvFile.load(@options["--env-file"]) : {}
           process_values = credentials_from_environment(@env)
           env_file_values = credentials_from_environment(file_values)
+          @sensitive_data.register(profile)
+          @sensitive_data.register(process_values)
+          @sensitive_data.register(env_file_values)
           merged = profile.merge(process_values).merge(env_file_values)
           merged["environment"] = @options["--environment"] if @options["--environment"]
           merged["environment"] ||= "sandbox"
@@ -1094,25 +1120,33 @@ module Namecheap
         type ? api_params.merge(field => type) : api_params
       end
 
-      def load_document(path)
+      def load_document(path, context: "input")
         content = (path == "-") ? @stdin.read : File.read(path)
-        value = if File.extname(path).downcase == ".json" || content.lstrip.start_with?("{", "[")
+        format = if File.extname(path).downcase == ".json" || content.lstrip.start_with?("{", "[")
+          "JSON"
+        else
+          "YAML"
+        end
+        value = if format == "JSON"
           JSON.parse(content)
         else
           YAML.safe_load(content, permitted_classes: [], aliases: false)
         end
         raise Error, "input must contain a mapping" unless value.is_a?(Hash)
-        value
+
+        @sensitive_data.register(value)
       rescue Errno::ENOENT
         raise Error, "input file not found: #{path}"
-      rescue JSON::ParserError, Psych::Exception => error
-        raise Error, "invalid input: #{error.message}"
+      rescue JSON::ParserError, Psych::Exception
+        source = (path == "-") ? "standard input" : path
+        expected = defined?(format) ? format : "JSON or YAML"
+        raise Error, "invalid #{context} at #{source}: expected valid #{expected}"
       end
 
-      def sensitive_document(path, required:)
+      def sensitive_document(path, required:, context:)
         @consumed_stdin = true if path == "-"
         check_private_file!(path) unless path == "-"
-        value = load_document(path)
+        value = load_document(path, context: context)
         missing = required.find { |key| blank?(value[key] || value[key.to_sym]) }
         raise Error, "input.#{missing} must be provided" if missing
 
@@ -1157,7 +1191,7 @@ module Namecheap
       end
 
       def mutate(operation, preview = {})
-        preview = redact(preview.merge("operation" => operation))
+        preview = preview.merge("operation" => operation)
         return if dry_run!(preview)
 
         confirm!("#{operation.capitalize}?")
@@ -1166,7 +1200,7 @@ module Namecheap
       end
 
       def paid_mutation(operation, quote)
-        preview = redact(quote.merge("operation" => operation))
+        preview = quote.merge("operation" => operation)
         return if dry_run!(preview)
 
         confirm!("#{operation.capitalize} for #{quote.fetch("price")} #{quote.fetch("currency")}?")
@@ -1201,20 +1235,6 @@ module Namecheap
         )
       end
 
-      def redact(value)
-        case value
-        when Hash
-          value.to_h do |key, child|
-            sensitive = key.to_s.match?(/api.?key|password|epp.?code|reset.?code|secret/i)
-            [key, sensitive ? "[redacted]" : redact(child)]
-          end
-        when Array
-          value.map { |child| redact(child) }
-        else
-          value
-        end
-      end
-
       def validate_contact!(contact)
         required = Namecheap::API::Domains::REQUIRED_CONTACT_FIELDS.map(&:to_s)
         missing = required.find { |field| blank?(contact[field] || contact[field.to_sym]) }
@@ -1244,6 +1264,16 @@ module Namecheap
         raise Error, "--raw cannot be combined with --dry-run" if @options["--raw"]
         render(preview, meta: {"dry_run" => true})
         true
+      end
+
+      def write_error(error)
+        if error.is_a?(Namecheap::API::ParseError)
+          message = "invalid API response"
+        else
+          @sensitive_data.register(error.response.to_h) if error.is_a?(Namecheap::API::ApiError)
+          message = @sensitive_data.redact_text(error.message)
+        end
+        @stderr.puts("Error: #{message}")
       end
 
       def split_domain(domain)

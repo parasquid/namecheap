@@ -16,8 +16,8 @@ module Namecheap
           raise Error, "config must contain a mapping: #{path}" unless value.is_a?(Hash)
 
           {"version" => 1, "profiles" => {}, "contacts" => {}}.merge(value)
-        rescue Psych::Exception => error
-          raise Error, "invalid config: #{error.message}"
+        rescue Psych::Exception
+          raise Error, "invalid config at #{path}: expected valid YAML"
         end
       end
 

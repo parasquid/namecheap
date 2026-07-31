@@ -80,7 +80,7 @@ bundle exec namecheap config profiles add sandbox
 bundle exec namecheap config profiles use sandbox
 ```
 
-Read commands default to human output; `--json` emits `{"data": ..., "meta": ...}` and `--raw` preserves the upstream XML. Mutating commands support `--dry-run` and ask for confirmation unless `--yes` is supplied. Registration and renewal require an exact API quote before confirmation. DNS record add, remove, and apply preserve the complete zone, show a diff, reject drift, and verify the submitted result.
+Read commands default to human output; `--json` emits `{"data": ..., "meta": ...}` and `--raw` emits upstream XML. When raw XML contains a recognized sensitive field, the CLI replaces the field and repeated copies of its value with `[redacted]`; use the Ruby API's `Response#raw_body` when exact programmatic access is required. Mutating commands support `--dry-run` and ask for confirmation unless `--yes` is supplied. Registration and renewal require an exact API quote before confirmation. DNS record add, remove, and apply preserve the complete zone, show a diff, reject drift, and verify the submitted result.
 
 Generate valid structured-input examples with commands such as:
 
@@ -232,6 +232,14 @@ prompt without echo; automation uses standard input or an input file accessible
 only by its owner. Paid commands use an exact pricing API quote when available.
 Domain-privacy renewal, for which Namecheap exposes no quote API, requires
 `--expected-price` and `--currency` and verifies the returned charge afterward.
+
+Runtime human, JSON, raw, preview, profile, and error output uses one recursive
+sensitive-field policy. API keys, passwords, EPP/auth codes, password reset
+codes, and tokens are rendered as `[redacted]`, including repeated copies inside
+other values such as redirect URLs. Matching uses an explicit normalized field
+list, so unrelated names such as `password_policy` and `tokenized` remain
+visible. Built-in examples contain documentation-only placeholders and are not
+runtime data.
 
 ## Roadmap
 

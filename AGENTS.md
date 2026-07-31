@@ -79,6 +79,18 @@ sequence when choosing a branch name:
 7. After a topic branch has been merged, offer to delete both its local and
    remote copies. Do not delete either branch without the user's confirmation.
 
+## Remote Completion Gate
+
+For pull-request work, a successful local test run, commit, push, or PR creation
+does not constitute completion. After every push, inspect and wait for all
+required PR checks to reach a terminal state. If any check fails, inspect its
+logs, fix the cause, push the correction, and repeat.
+
+Report work as complete only when the remote branch contains the intended
+commit, every required check is present and green, and the PR diff contains only
+the intended files. While checks are pending, report the work as pending rather
+than complete.
+
 ## Security & Releases
 
 Never commit API keys, usernames, client IP configuration, or environment files containing credentials. Manual staging tests must load sandbox credentials from `.env.staging`; never use production credentials for them. Version changes, branch pushes, and gem builds do not constitute a release. A release requires a finalized changelog entry and an annotated signed `vVERSION` tag from `main` that GitHub reports as verified. Pushing that tag runs the release workflow, which validates the tag and publishes through RubyGems trusted publishing without a long-lived API key.
